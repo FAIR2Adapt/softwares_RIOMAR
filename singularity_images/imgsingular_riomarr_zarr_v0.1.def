@@ -1,0 +1,76 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+%post
+    # Update and install base dependencies
+    apt-get update && apt-get install -y wget bzip2
+
+    # -------------------------------------------------------------------------
+    # Miniconda installation
+    # -------------------------------------------------------------------------
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+    bash /tmp/miniconda.sh -b -p /opt/miniconda
+    rm /tmp/miniconda.sh
+
+    # Temporarily add conda to PATH for configuration
+    export PATH=/opt/miniconda/bin:$PATH
+
+    # -------------------------------------------------------------------------
+    # Accept Anaconda Terms of Service (if required)
+    # -------------------------------------------------------------------------
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+    # -------------------------------------------------------------------------
+    # Configure conda to use conda-forge exclusively
+    # -------------------------------------------------------------------------
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+    conda config --remove channels defaults
+
+    # Update conda
+    conda update -y conda
+
+    # -------------------------------------------------------------------------
+    # Create environment with Python
+    # -------------------------------------------------------------------------
+    # Python 3.13: incompatible with 'pipes' (Jupyter Spawner broken)
+    # conda create -y -n env_zarr_riomar python=3.13 numpy pandas
+    conda create -y -n env_zarr_riomar python=3.11 numpy pandas
+
+    # -------------------------------------------------------------------------
+    # Main libraries installation
+    # -------------------------------------------------------------------------
+    conda run -n env_zarr_riomar conda install -y \
+        cdshealpix xarray pystac-client requests aiohttp \
+        xdggs sparse affine zarr
+
+    conda run -n env_zarr_riomar conda install -y \
+        cartopy folium h5py
+
+    # -------------------------------------------------------------------------
+    # (Optional) Jupyter and related tools installation
+    # -------------------------------------------------------------------------
+    # conda run -n env_zarr_riomar conda install -y jupyterhub jupyterlab nb_conda_kernels batchspawner
+    # conda run -n env_zarr_riomar conda install -y notebook ipykernel
+
+    # -------------------------------------------------------------------------
+    # Additional pip installations
+    # -------------------------------------------------------------------------
+    conda run -n env_zarr_riomar pip install matplotlib seaborn
+
+    # -------------------------------------------------------------------------
+    # (Optional) Register the conda kernel in Jupyter
+    # -------------------------------------------------------------------------
+    # conda run -n env_zarr_riomar python -m ipykernel install --user \
+    #     --name env_zarr_riomar --display-name "Python 3.11 (env_zarr_riomar)"
+
+%environment
+    # Environment variables for the container
+    export PATH=/opt/miniconda/bin:$PATH
+    source /opt/miniconda/etc/profile.d/conda.sh
+    conda activate env_zarr_riomar
+
+%runscript
+    # Default script executed when running the container
+    exec /bin/bash
