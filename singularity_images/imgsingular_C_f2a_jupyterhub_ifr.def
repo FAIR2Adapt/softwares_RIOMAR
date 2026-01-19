@@ -1,0 +1,31 @@
+Bootstrap: localimage
+From: ./imgsingular_B_conda_f2a_riomar_p311.sif
+
+
+%post
+    # -------------------------------------------------------------------------
+    # (Optional) Jupyter and related tools installation
+    # -------------------------------------------------------------------------
+    # Install JupyterHub environment, compatible with IFR hpc requirements
+
+    conda run -n env_f2a_riomar conda install -y jupyterhub==2.3.1 jupyterlab==2.3.1 nb_conda_kernels batchspawner
+    conda run -n env_f2a_riomar conda install -y notebook ipykernel
+
+    # -------------------------------------------------------------------------
+    # Additional pip installations
+    # -------------------------------------------------------------------------
+    #conda run -n env_f2a_riomar pip install whatever_you_need
+
+    # -------------------------------------------------------------------------
+    # (Optional) Register the conda kernel in Jupyter
+    # -------------------------------------------------------------------------
+    conda run -n env_f2a_riomar python -m ipykernel install --user --name env_f2a_riomar --display-name "Python 3.11 (env_f2a_riomar)"
+
+
+#%files
+#    monscript.sh /usr/local/bin/monscript.sh
+
+
+%runscript
+    #echo "Welcome to this F2A Riomar new container (with zarr & cie) !"
+    jupyter lab --ip=0.0.0.0 --no-browser --allow-root

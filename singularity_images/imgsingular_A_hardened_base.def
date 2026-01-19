@@ -1,0 +1,12 @@
+Bootstrap: docker
+From: dhi.io/debian-base:trixie
+
+### Note : if you want to avoid hardened image (auth issues for example), this stack should work with :
+##From: ubuntu:24.04
+##From: debian:trixie
+
+
+%post
+    # Install base system and packages
+    apt-get update && apt-get install -y curl wget bzip2
+

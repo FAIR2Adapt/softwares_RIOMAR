@@ -1,0 +1,61 @@
+Bootstrap: localimage
+From: ./imgsingular_A_hardened_base.sif
+
+
+%post
+    # -------------------------------------------------------------------------
+    # Miniconda installation
+    # -------------------------------------------------------------------------
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+    bash /tmp/miniconda.sh -b -p /opt/miniconda
+    rm /tmp/miniconda.sh
+
+    # Temporarily add conda to PATH for configuration
+    export PATH=/opt/miniconda/bin:$PATH
+
+    # -------------------------------------------------------------------------
+    # Accept Anaconda Terms of Service (if required)
+    # -------------------------------------------------------------------------
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+    # -------------------------------------------------------------------------
+    # Configure conda to use conda-forge exclusively (to avoid licence issues)
+    # -------------------------------------------------------------------------
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+    conda config --remove channels defaults
+
+    # Update conda
+    conda update -y conda
+
+    # -------------------------------------------------------------------------
+    # Create environment with Python
+    # -------------------------------------------------------------------------
+    # Create conda environment for Riomar, with python 3.11 and base libraries
+    # Important note : do not use python >=3.13, pipes module is removed, which causes jupyter spawner to fail (ModuleNotFoundError: No module named 'pipes')
+    
+    conda create -y -n env_f2a_riomar python=3.11 numpy pandas   
+
+    # -------------------------------------------------------------------------
+    # Main libraries installation
+    # -------------------------------------------------------------------------
+    conda run -n env_f2a_riomar conda install -y cdshealpix xarray pystac-client requests aiohttp xdggs sparse affine zarr
+    conda run -n env_f2a_riomar conda install -y cartopy folium h5py
+   
+    # -------------------------------------------------------------------------
+    # Additional pip installations
+    # -------------------------------------------------------------------------
+    conda run -n env_f2a_riomar pip install matplotlib seaborn
+
+
+%environment
+    # Environment variables for the container
+    export PATH=/opt/miniconda/bin:$PATH
+    source /opt/miniconda/etc/profile.d/conda.sh
+    conda activate env_f2a_riomar
+
+
+%runscript
+    # Default script executed when running the container
+    exec /bin/bash
