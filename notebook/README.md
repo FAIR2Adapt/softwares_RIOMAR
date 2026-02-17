@@ -125,4 +125,6 @@ Planned publication target (once validated):
 
 -   Notebooks experimenting with Kerchunk creation and loading on
     Datarmor\
-    (to be added by Fred)
+    `M1_Kerchunk_Create_Virtualizarr_Gamar.ipynb                M2_Icechunk_Create_Virtualizarr_Gamar_withDask.ipynb
+M1_Kerchunk_Create_Virtualizarr_Gamar_withDask.ipynb       M2_Icechunk_Use_Virtualizarr_Gamar.ipynb
+M1_bof_Kerchunk_Create_Virtualizarr_Gamar-MultiZarr.ipynb `
