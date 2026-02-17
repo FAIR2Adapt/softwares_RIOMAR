@@ -1,69 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-Create_healpix.py
-
-Auto-generated from Create_healpix.ipynb, then cleaned for readability.
-Edits applied:
-- Removed Jupyter cell markers
-- Normalized whitespace (max 2 blank lines)
-- Stripped trailing spaces
-"""
-
-#!/usr/bin/env python
-
-# #  regridding open RiOMar/GAMAR via Kerchunk → write a HEALPIX Zarr
-#
-# This notebook make create HEALPIxZARR of ROI>
-#
-# It opens the dataset from a **Kerchunk catalog** generated on HPC, and the *same* workflow can open:
-# - directly on the HPC filesystem, or
-# - over HTTPS via the DATARMOR export service (`https://data-fair2adapt.ifremer.fr/`).
-#
-# ## Goal
-# Produce a temporary Zarr (e.g. `small.zarr`) that is then used as input to:
-# - `regrid_apply_ufunc.ipynb`
-#
-# ## Outputs
-# - `OUT_ZARR`: a lightweight subset written to Zarr (local or HPC scratch)
-#
-# ## Steps
-# 1. **Open the dataset** from a Kerchunk catalog (portable: HPC filesystem or HTTPS export)
-# 2. **Select variables** and ensure lon/lat are explicit coordinates
-# 3. **Build a polygon mask** helper for the model grid
-# 4. **Define the ROI** and apply the mask (load ROI polygon, mask, and subset)
-# 5. **regrid**
-# 6. **Write a  Zarr**
-#
-#
-#
-
-# ## Kerchunk catalog options
-#
-# A **Kerchunk catalog** is a JSON mapping that lets Xarray open a collection of NetCDF (or similar) files as a *virtual* Zarr dataset.
-# Depending on where you run this notebook, you can point to:
-#
-# - **HPC filesystem path** (fast, when you have direct access to `/scale/...`)
-# - **HTTPS export** (portable, when you access the same data through `https://data-fair2adapt.ifremer.fr/`)
-#
-# Below are example catalog paths that have been created previously (kept here as a reference).
-#
-
-# ## 1. **Open the dataset** from a Kerchunk catalog (portable: HPC filesystem or HTTPS export)
-#
-# Many Kerchunk catalogs store references to the original files (often as absolute HPC paths).
-# When opening through HTTPS, we **rewrite** those references from:
-#
-# `/scale/project/lops-oh-fair2adapt/...` → `https://data-fair2adapt.ifremer.fr/...`
-#
-# The cell below:
-# 1. Detects whether the HPC path exists (so we are running on the cluster).
-# 2. Otherwise loads the JSON over HTTPS, patches references in-memory, and opens the dataset.
-# 3. (Optional) can cache the patched references locally as a parquet file for faster re-opening.
-#
-
-
+# this takes 4 s
 #
 import json
 import fsspec
@@ -78,11 +13,15 @@ import xdggs
 import healpix_geo
 
 time_chunk_size = 24  # 1 day as a chunk
+time_chunk_size = 1  # 1 day as a chunk
+
 child_level=13
 
 with np.load("parent_ids.npz") as data:
     parent_ids = data["parent_ids"]
     parent_level = int(data["parent_level"])
+
+    
 
 HPC_PREFIX    = "/scale/project/lops-oh-fair2adapt/"
 HTTPS_PREFIX  = "https://data-fair2adapt.ifremer.fr/"
@@ -90,7 +29,8 @@ CATALOG_PATH  = "fpaul/tmp/riomar_3months.json"
 #CATALOG_PATH  = "riomar-virtualizarr/Y2023.json"
 #CATALOG_PATH  = "riomar-virtualizarr/YALL.json"
 OUT_PARQUET   = "riomar_3months_.parq"   # local parquet refs cache
-OUT_ZARR   = "riomar-zarr_tina/Y2023.zarr"  # local parquet refs cache
+OUT_ZARR   = "riomar-zarr_tina/test3.zarr"  # local parquet refs cache
+
 
 def patch_kc_refs_inplace(kc, hpc_prefix=HPC_PREFIX, https_prefix=HTTPS_PREFIX):
     refs = kc.get("refs", kc.get("references"))
@@ -111,53 +51,58 @@ def patch_kc_refs_inplace(kc, hpc_prefix=HPC_PREFIX, https_prefix=HTTPS_PREFIX):
     kc["refs"] = refs
     return kc
 
+
 # ------------------------------
 # 1) HPC mode: open directly
 # ------------------------------
 if Path(HPC_PREFIX).exists():
     ##on HPC
 
+
     zarr_hp_file_path = HPC_PREFIX + OUT_ZARR
 
     # pick a fast local path on the compute node
-    local_dir = ( "/tmp")
+    local_dir = (
+     "/tmp"
+    )
     local_dir = str(Path(local_dir) / "dask-scratch")
     print("Using Dask local_directory:", local_dir)
-
+    
+    
     print("=== Starting local Dask cluster (auto-sized) ===")
-
+    
     cpu = os.cpu_count() or 1
     total_gb = psutil.virtual_memory().total / (1024**3)
-
+    
     # Good “use most, but not all” defaults:
     n_workers = cpu                   # ~1 worker per CPU core
     threads_per_worker = 1            # best for numpy-heavy compute
     memory_limit_gb = (total_gb * 0.85) / n_workers  # leave ~15% headroom
     memory_limit = f"{memory_limit_gb:.2f}GB"
-    n_workers=32
+    n_workers=16
     cluster = LocalCluster(
         n_workers=n_workers,
     #    threads_per_worker=threads_per_worker,
-        processes=True,
-        memory_limit=memory_limit,
+        processes=False,
+#        memory_limit=memory_limit,
         local_directory=local_dir,   # <--- THIS FIXES THE WARNING
-        dashboard_address=":8787",
+#        dashboard_address=":8787",
     )
     client = Client(cluster)
-
+    
     print("Dask dashboard:", client.dashboard_link)
-
+    
     print("\n=== Dask cluster resources ===")
     info = client.scheduler_info()
     workers = info["workers"]
-
+    
     total_threads = sum(w["nthreads"] for w in workers.values())
     total_mem_gb = sum(w["memory_limit"] for w in workers.values()) / (1024**3)
-
+    
     print(f"Workers: {len(workers)}")
     print(f"Total threads: {total_threads}")
     print(f"Total memory limit: {total_mem_gb:.2f} GB")
-
+    
     # Optional: per-worker details
     #for addr, w in workers.items():
      #   print(f"- {addr}: nthreads={w['nthreads']}, mem_limit={w['memory_limit']/1e9:.2f} GB »)
@@ -179,7 +124,7 @@ else:
     print("Running in HTTPS mode:", KERCHUNK_CATALOG)
     # If parquet refs already exist locally, open them (fast path)
     # This part is commented since on the fly transformation is faster than loading the parquet file in actual config
-    # (check why at some point)
+    # (check why at some point) 
     # Loading from local parquet is also slower than loading json and convert the path on the fly...
     # thus i deactivate the if here
     #if Path(OUT_PARQUET).exists():
@@ -204,37 +149,12 @@ else:
         #kcdf.refs_to_dataframe(kc, OUT_PARQUET)
         #print("✅ Wrote kerchunk parquet refs to:", OUT_PARQUET)
 
-ds
-
-
-# ## 2. **Select variables** and ensure lon/lat are explicit coordinates
-#
-# The original dataset contains many variables. For this demo we keep:
-#
-# - `temp` (temperature)
-# - `salt` (salinity)
-# - `zeta` (sea surface height)
-#
-# We also **load** the 2D longitude/latitude fields and attach them as coordinates (`nav_lon_rho`, `nav_lat_rho`).
-# Loading them explicitly avoids repeated remote reads later (plots, masking, regridding, etc.).
-#
-
-
+print(ds)
 ds=ds[['temp','salt','zeta']].assign_coords(
     nav_lon_rho=ds["nav_lon_rho"].load(),
     nav_lat_rho=ds["nav_lat_rho"].load(),
 )
-ds
 
-
-# ## 3. **Build a polygon mask** helper for the model grid
-# To extract a spatial subset, we load a boundary polygon (GeoJSON) and create a boolean mask on the dataset grid:
-#
-# - `True`  → grid point is inside the polygon
-# - `False` → outside
-#
-# This is useful to reduce the dataset to a Region Of Interest (ROI) before saving or regridding.
-#
 
 
 def apply_polygon_mask(
@@ -305,12 +225,7 @@ def apply_polygon_mask(
     # Attach mask (as a coord, like you were doing)
     return ds.assign_coords({mask_name: mask_da}).where(mask_da)#,drop=True)
 
-
 # Build operator once
-# ----------------------------------------------------------------------------
-# Build HEALPix regridding operator
-# ----------------------------------------------------------------------------
-
 
 def to_healpix(ds_in):
     from regrid_to_healpix.regrid_to_healpix_bilinear import Set
@@ -367,25 +282,10 @@ def to_healpix(ds_in):
     
     # aline the fill non existing values with np.nan, and take out non interestd zone
     #
-    ds_aligned = (
+    return  (
         ds_hp.reindex(cell_ids=target_ids, fill_value=np.nan)
         .chunk({"cell_ids": chunk_size},{"time_counter": time_chunk_size})
     )
-    return ds_aligned
-
-
-
-# ## 4. **Define the ROI** and apply the mask (load ROI polygon, mask, and subset)
-#
-# For the regridding demo we focus on a limited area defined by an **outer boundary** polygon (stored in `outer_boundary.geojson`).
-# We will:
-#
-# 1. Read the polygon from GeoJSON.
-# 2. Trim the dataset  with polygon mask
-# 3. Find out which values are 'ground' by  computing not null values of zeta at time_counter=0
-# 4. Stack the spatial coordinate and drop all the ground point
-#
-
 
 import geopandas as gpd
 # 1. Read the polygon from GeoJSON.
@@ -407,22 +307,16 @@ ds_roi['zeta_mask']=zeta_mask
 ds_roi_1d=ds_roi.stack(point=("y_rho", "x_rho") )
 
 ds_roi_1d = ds_roi_1d.where(ds_roi_1d.zeta_mask,drop=True).drop_vars('zeta_mask')
-ds_roi_1d
+print(ds_roi_1d)
 
 
-# ## 5.convert to healpix
-#
-#
-#
-
-
-ds_roi_1d = ds_roi_1d.chunk({"time_counter": time_chunk_size})
-#ds_in = ds_roi_1d.isel(time_counter= slice(0,24*100))
-
-block = 24   # 48 (or 24*100 etc.)
+block = time_chunk_size   # 48 (or 24*100 etc.)
 nt = ds_roi_1d.sizes["time_counter"]
-nt = 48 
+nt = 2 
 first = True
+
+ds_roi_1d=ds_roi_1d.chunk({"time_counter": time_chunk_size})
+
 for t0 in range(0, nt, block):
     t1 = min(nt, t0 + block)
 
@@ -442,5 +336,4 @@ for t0 in range(0, nt, block):
 
 # consolidate once (optional)
 import zarr
-zarr.convenience.consolidate_metadata(zarr_hp_file_path)
-
+zarr.consolidate_metadata(zarr_hp_file_path)

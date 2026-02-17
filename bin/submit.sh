@@ -12,6 +12,7 @@
 
 # Activate your environment by absolute path
 #micromamba activate /home1/datawork/todaka/conda-env/riomar
+cd /home1/datawork/todaka/git/softwares_RIOMAR/bin
 ENV=/home1/datawork/todaka/conda-env/riomar
 export PATH="$ENV/bin:$PATH"
 
@@ -24,5 +25,5 @@ echo "Python: $(which python)"
 python --version
 
 # --- run ---
-python Create_healpix.py
+python Create_healpix.py > run.log 2>&1
 ~
