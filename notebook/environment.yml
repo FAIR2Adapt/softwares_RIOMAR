@@ -1,0 +1,56 @@
+name: riomar
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+
+  # notebook runtime
+  - pip
+  - ipykernel
+  - jupyterlab
+
+  # core scientific
+  - numpy
+  - scipy
+  - pandas
+  - numba
+  - bottleneck
+  - cftime
+
+  # xarray + dask
+  - xarray
+  - dask
+  - distributed
+
+  # zarr + compression
+  - zarr
+  - numcodecs
+
+  # netcdf/hdf
+  - hdf5
+  - netcdf4
+  - h5netcdf
+  - h5py
+
+  # filesystem / http
+  - fsspec
+  - requests
+
+  # kerchunk backend for xarray (engine="kerchunk")
+  - kerchunk
+
+  # geospatial + plotting (used by ROI + boundary plotting notebooks)
+  - geopandas
+  - shapely
+  - pyproj
+  - cartopy
+  - matplotlib
+  - hvplot
+  - bokeh
+
+  # healpix_geo module (package name is healpix-geo)
+  - healpix-geo
+
+  - pip:
+      # DGGS extension used in notebooks
+      - xdggs
