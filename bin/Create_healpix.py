@@ -13,7 +13,7 @@ import xdggs
 import healpix_geo
 
 time_chunk_size = 24  # 1 day as a chunk
-time_chunk_size = 1  # 1 day as a chunk
+#time_chunk_size = 1  # 1 day as a chunk
 
 child_level=13
 
@@ -312,7 +312,7 @@ print(ds_roi_1d)
 
 block = time_chunk_size   # 48 (or 24*100 etc.)
 nt = ds_roi_1d.sizes["time_counter"]
-nt = 2 
+nt = 24*2
 first = True
 
 ds_roi_1d=ds_roi_1d.chunk({"time_counter": time_chunk_size})
