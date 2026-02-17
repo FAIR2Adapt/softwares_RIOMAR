@@ -64,7 +64,147 @@ Edits applied:
 #
 
 
-get_ipython().run_cell_magic('time', '', '# this takes 4 s\n#\nimport json\nimport fsspec\nfrom pathlib import Path\nimport os\nimport psutil\nfrom dask.distributed import Client, LocalCluster\nimport xarray as xr\nimport numpy as np\n\nimport xdggs\nimport healpix_geo\n\ntime_chunk_size = 24  # 1 day as a chunk\nchild_level=13\n\nwith np.load("parent_ids.npz") as data:\n    parent_ids = data["parent_ids"]\n    parent_level = int(data["parent_level"])\n\n\n\nHPC_PREFIX    = "/scale/project/lops-oh-fair2adapt/"\nHTTPS_PREFIX  = "https://data-fair2adapt.ifremer.fr/"\nCATALOG_PATH  = "fpaul/tmp/riomar_3months.json"\n#CATALOG_PATH  = "riomar-virtualizarr/Y2023.json"\nCATALOG_PATH  = "riomar-virtualizarr/YALL.json"\nOUT_PARQUET   = "riomar_3months_.parq"   # local parquet refs cache\nOUT_ZARR   = "riomar-zarr_tina/Y2023.zarr"  # local parquet refs cache\n\n\ndef patch_kc_refs_inplace(kc, hpc_prefix=HPC_PREFIX, https_prefix=HTTPS_PREFIX):\n    refs = kc.get("refs", kc.get("references"))\n    if refs is None:\n        raise KeyError("Can\'t find \'refs\' (or \'references\') in kerchunk JSON")\n\n    def patch_target(x):\n        if isinstance(x, str) and x.startswith(hpc_prefix):\n            return https_prefix + x[len(hpc_prefix):]\n        return x\n\n    for k, v in list(refs.items()):\n        if isinstance(v, list) and v and isinstance(v[0], str):\n            refs[k] = [patch_target(v[0])] + v[1:]\n        elif isinstance(v, str):\n            refs[k] = patch_target(v)\n\n    kc["refs"] = refs\n    return kc\n\n\n# ------------------------------\n# 1) HPC mode: open directly\n# ------------------------------\nif Path(HPC_PREFIX).exists():\n    ##on HPC\n\n\n    zarr_hp_file_path = HPC_PREFIX + OUT_ZARR\n\n    # pick a fast local path on the compute node\n    local_dir = (\n     "/tmp"\n    )\n    local_dir = str(Path(local_dir) / "dask-scratch")\n    print("Using Dask local_directory:", local_dir)\n\n\n    print("=== Starting local Dask cluster (auto-sized) ===")\n\n    cpu = os.cpu_count() or 1\n    total_gb = psutil.virtual_memory().total / (1024**3)\n\n    # Good “use most, but not all” defaults:\n    n_workers = cpu                   # ~1 worker per CPU core\n    threads_per_worker = 1            # best for numpy-heavy compute\n    memory_limit_gb = (total_gb * 0.85) / n_workers  # leave ~15% headroom\n    memory_limit = f"{memory_limit_gb:.2f}GB"\n    n_workers=32\n    cluster = LocalCluster(\n        n_workers=n_workers,\n    #    threads_per_worker=threads_per_worker,\n        processes=True,\n        memory_limit=memory_limit,\n        local_directory=local_dir,   # <--- THIS FIXES THE WARNING\n        dashboard_address=":8787",\n    )\n    client = Client(cluster)\n\n    print("Dask dashboard:", client.dashboard_link)\n\n    print("\\n=== Dask cluster resources ===")\n    info = client.scheduler_info()\n    workers = info["workers"]\n\n    total_threads = sum(w["nthreads"] for w in workers.values())\n    total_mem_gb = sum(w["memory_limit"] for w in workers.values()) / (1024**3)\n\n    print(f"Workers: {len(workers)}")\n    print(f"Total threads: {total_threads}")\n    print(f"Total memory limit: {total_mem_gb:.2f} GB")\n\n    # Optional: per-worker details\n    #for addr, w in workers.items():\n     #   print(f"- {addr}: nthreads={w[\'nthreads\']}, mem_limit={w[\'memory_limit\']/1e9:.2f} GB »)\n    KERCHUNK_CATALOG = HPC_PREFIX + CATALOG_PATH\n    print("Running in HPC mode:", KERCHUNK_CATALOG)\n\n    ds = xr.open_dataset(KERCHUNK_CATALOG, engine="kerchunk", chunks={})\n\n# ------------------------------\n# 2) HTTPS mode: prefer local parquet cache if present\n# ------------------------------\nelse:\n    cluster = LocalCluster()\n    client = Client(cluster)\n    client\n    zarr_hp_file_path =  OUT_ZARR\n\n    KERCHUNK_CATALOG = HTTPS_PREFIX + CATALOG_PATH\n    print("Running in HTTPS mode:", KERCHUNK_CATALOG)\n    # If parquet refs already exist locally, open them (fast path)\n    # This part is commented since on the fly transformation is faster than loading the parquet file in actual config\n    # (check why at some point) \n    # Loading from local parquet is also slower than loading json and convert the path on the fly...\n    # thus i deactivate the if here\n    #if Path(OUT_PARQUET).exists():\n    if False and Path(OUT_PARQUET).exists():\n        print(f"✅ Found local parquet refs: ./{OUT_PARQUET} -> opening that")\n        xr.open_dataset(OUT_PARQUET, engine="kerchunk", chunks={})\n\n    # Else: fetch JSON, patch refs to https, open, AND write parquet refs cache\n    else:\n        print(f"ℹ️ No local parquet refs found at ./{OUT_PARQUET} -> creating them from JSON")\n\n        with fsspec.open(KERCHUNK_CATALOG, "rt") as f:\n            kc = json.load(f)\n\n        kc = patch_kc_refs_inplace(kc)\n\n        # open now (from in-memory dict)\n        ds = xr.open_dataset(kc, engine="kerchunk", chunks={})\n\n        ## write parquet refs cache for next time\n        #import kerchunk.df as kcdf\n        #kcdf.refs_to_dataframe(kc, OUT_PARQUET)\n        #print("✅ Wrote kerchunk parquet refs to:", OUT_PARQUET)\n\nds\n')
+#
+import json
+import fsspec
+from pathlib import Path
+import os
+import psutil
+from dask.distributed import Client, LocalCluster
+import xarray as xr
+import numpy as np
+
+import xdggs
+import healpix_geo
+
+time_chunk_size = 24  # 1 day as a chunk
+child_level=13
+
+with np.load("parent_ids.npz") as data:
+    parent_ids = data["parent_ids"]
+    parent_level = int(data["parent_level"])
+
+HPC_PREFIX    = "/scale/project/lops-oh-fair2adapt/"
+HTTPS_PREFIX  = "https://data-fair2adapt.ifremer.fr/"
+CATALOG_PATH  = "fpaul/tmp/riomar_3months.json"
+#CATALOG_PATH  = "riomar-virtualizarr/Y2023.json"
+#CATALOG_PATH  = "riomar-virtualizarr/YALL.json"
+OUT_PARQUET   = "riomar_3months_.parq"   # local parquet refs cache
+OUT_ZARR   = "riomar-zarr_tina/Y2023.zarr"  # local parquet refs cache
+
+def patch_kc_refs_inplace(kc, hpc_prefix=HPC_PREFIX, https_prefix=HTTPS_PREFIX):
+    refs = kc.get("refs", kc.get("references"))
+    if refs is None:
+        raise KeyError("Can't find 'refs' (or 'references') in kerchunk JSON")
+
+    def patch_target(x):
+        if isinstance(x, str) and x.startswith(hpc_prefix):
+            return https_prefix + x[len(hpc_prefix):]
+        return x
+
+    for k, v in list(refs.items()):
+        if isinstance(v, list) and v and isinstance(v[0], str):
+            refs[k] = [patch_target(v[0])] + v[1:]
+        elif isinstance(v, str):
+            refs[k] = patch_target(v)
+
+    kc["refs"] = refs
+    return kc
+
+# ------------------------------
+# 1) HPC mode: open directly
+# ------------------------------
+if Path(HPC_PREFIX).exists():
+    ##on HPC
+
+    zarr_hp_file_path = HPC_PREFIX + OUT_ZARR
+
+    # pick a fast local path on the compute node
+    local_dir = ( "/tmp")
+    local_dir = str(Path(local_dir) / "dask-scratch")
+    print("Using Dask local_directory:", local_dir)
+
+    print("=== Starting local Dask cluster (auto-sized) ===")
+
+    cpu = os.cpu_count() or 1
+    total_gb = psutil.virtual_memory().total / (1024**3)
+
+    # Good “use most, but not all” defaults:
+    n_workers = cpu                   # ~1 worker per CPU core
+    threads_per_worker = 1            # best for numpy-heavy compute
+    memory_limit_gb = (total_gb * 0.85) / n_workers  # leave ~15% headroom
+    memory_limit = f"{memory_limit_gb:.2f}GB"
+    n_workers=32
+    cluster = LocalCluster(
+        n_workers=n_workers,
+    #    threads_per_worker=threads_per_worker,
+        processes=True,
+        memory_limit=memory_limit,
+        local_directory=local_dir,   # <--- THIS FIXES THE WARNING
+        dashboard_address=":8787",
+    )
+    client = Client(cluster)
+
+    print("Dask dashboard:", client.dashboard_link)
+
+    print("\n=== Dask cluster resources ===")
+    info = client.scheduler_info()
+    workers = info["workers"]
+
+    total_threads = sum(w["nthreads"] for w in workers.values())
+    total_mem_gb = sum(w["memory_limit"] for w in workers.values()) / (1024**3)
+
+    print(f"Workers: {len(workers)}")
+    print(f"Total threads: {total_threads}")
+    print(f"Total memory limit: {total_mem_gb:.2f} GB")
+
+    # Optional: per-worker details
+    #for addr, w in workers.items():
+     #   print(f"- {addr}: nthreads={w['nthreads']}, mem_limit={w['memory_limit']/1e9:.2f} GB »)
+    KERCHUNK_CATALOG = HPC_PREFIX + CATALOG_PATH
+    print("Running in HPC mode:", KERCHUNK_CATALOG)
+
+    ds = xr.open_dataset(KERCHUNK_CATALOG, engine="kerchunk", chunks={})
+
+# ------------------------------
+# 2) HTTPS mode: prefer local parquet cache if present
+# ------------------------------
+else:
+    cluster = LocalCluster()
+    client = Client(cluster)
+    client
+    zarr_hp_file_path =  OUT_ZARR
+
+    KERCHUNK_CATALOG = HTTPS_PREFIX + CATALOG_PATH
+    print("Running in HTTPS mode:", KERCHUNK_CATALOG)
+    # If parquet refs already exist locally, open them (fast path)
+    # This part is commented since on the fly transformation is faster than loading the parquet file in actual config
+    # (check why at some point)
+    # Loading from local parquet is also slower than loading json and convert the path on the fly...
+    # thus i deactivate the if here
+    #if Path(OUT_PARQUET).exists():
+    if False and Path(OUT_PARQUET).exists():
+        print(f"✅ Found local parquet refs: ./{OUT_PARQUET} -> opening that")
+        xr.open_dataset(OUT_PARQUET, engine="kerchunk", chunks={})
+
+    # Else: fetch JSON, patch refs to https, open, AND write parquet refs cache
+    else:
+        print(f"ℹ️ No local parquet refs found at ./{OUT_PARQUET} -> creating them from JSON")
+
+        with fsspec.open(KERCHUNK_CATALOG, "rt") as f:
+            kc = json.load(f)
+
+        kc = patch_kc_refs_inplace(kc)
+
+        # open now (from in-memory dict)
+        ds = xr.open_dataset(kc, engine="kerchunk", chunks={})
+
+        ## write parquet refs cache for next time
+        #import kerchunk.df as kcdf
+        #kcdf.refs_to_dataframe(kc, OUT_PARQUET)
+        #print("✅ Wrote kerchunk parquet refs to:", OUT_PARQUET)
+
+ds
 
 
 # ## 2. **Select variables** and ensure lon/lat are explicit coordinates
