@@ -38,6 +38,8 @@ dependencies:
 
   # kerchunk backend for xarray (engine="kerchunk")
   - kerchunk
+  - fastparquet
+  - virtualizarr
 
   # geospatial + plotting (used by ROI + boundary plotting notebooks)
   - geopandas
