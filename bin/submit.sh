@@ -26,5 +26,6 @@ python --version
 
 # --- run ---
 #python Create_healpix_processes.py > run.log 2>&1
-python Create_healpix.py > run.log 2>&1
+#python Create_healpix.py > run.log 2>&1
+python Create_healpix_processes_patched.py > run.log 2>&1
 ~
