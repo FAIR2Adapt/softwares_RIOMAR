@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -q gpu
 #PBS -l walltime=24:00:00
-#PBS -l select=1:ncpus=16:ngpus=2:mem=256gb
+#PBS -l select=1:ncpus=16:ngpus=2:mem=512gb
 
 # --- micromamba environment ---
 # If micromamba isn't already on PATH, load it here (site-specific).
@@ -25,5 +25,6 @@ echo "Python: $(which python)"
 python --version
 
 # --- run ---
+#python Create_healpix_processes.py > run.log 2>&1
 python Create_healpix.py > run.log 2>&1
 ~

@@ -27,9 +27,9 @@ HPC_PREFIX    = "/scale/project/lops-oh-fair2adapt/"
 HTTPS_PREFIX  = "https://data-fair2adapt.ifremer.fr/"
 CATALOG_PATH  = "fpaul/tmp/riomar_3months.json"
 #CATALOG_PATH  = "riomar-virtualizarr/Y2023.json"
-#CATALOG_PATH  = "riomar-virtualizarr/YALL.json"
+CATALOG_PATH  = "riomar-virtualizarr/YALL.json"
 OUT_PARQUET   = "riomar_3months_.parq"   # local parquet refs cache
-OUT_ZARR   = "riomar-zarr_tina/test3.zarr"  # local parquet refs cache
+OUT_ZARR   = "riomar-zarr_tina/ALL.zarr"  # local parquet refs cache
 
 
 def patch_kc_refs_inplace(kc, hpc_prefix=HPC_PREFIX, https_prefix=HTTPS_PREFIX):
@@ -312,7 +312,7 @@ print(ds_roi_1d)
 
 block = time_chunk_size   # 48 (or 24*100 etc.)
 nt = ds_roi_1d.sizes["time_counter"]
-nt = 24*2
+#nt = 24*2
 first = True
 
 ds_roi_1d=ds_roi_1d.chunk({"time_counter": time_chunk_size})
