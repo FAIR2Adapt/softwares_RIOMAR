@@ -26,6 +26,9 @@ YEARS = range(2001, 2024)
 time_chunk_size = 24  # 1 day as a chunk
 child_level=13
 OUT_ZARR   = HPC_PREFIX + "riomar-zarr_tina/ALL.zarr"   
+n_workers=16
+block = time_chunk_size*n_workers   # 48 (or 24*100 etc.)
+os.environ["PYTHONUNBUFFERED"] = "1"
 
 
 # -----------------------------------------------------------------------------
@@ -40,7 +43,8 @@ def start_client() -> Client:
         total_gb = psutil.virtual_memory().total / (1024**3)
 
         # Reasonable defaults; tune if needed
-        n_workers = min(cpu, 32)              # cap at 32 like you intended
+        #n_workers = min(cpu, 32)              # cap at 32 like you intended
+        n_workers = 16                        # cap at 32 like you intended
         threads_per_worker = 1
         memory_limit_gb = (total_gb * 0.85) / n_workers
         memory_limit = f"{memory_limit_gb:.2f}GB"
@@ -214,10 +218,9 @@ def main() -> None:
     with np.load("parent_ids.npz") as data:
         parent_ids = data["parent_ids"]
         parent_level = int(data["parent_level"])
-    gdf=gpd.read_file("outer_boundary.geojson", driver="GeoJSON")
+    gdf=gpd.read_file("outer_boundary.geojson"), driver="GeoJSON")
     poly = gdf.geometry.iloc[0]  
     first = True
-    block = time_chunk_size*100   # 48 (or 24*100 etc.)
     for year in YEARS:
         print(year, "year")
 
