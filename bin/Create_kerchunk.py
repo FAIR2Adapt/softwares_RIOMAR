@@ -20,7 +20,7 @@ from virtualizarr.registry import ObjectStoreRegistry
 # -----------------------------------------------------------------------------
 HPC_PREFIX = Path("/scale/project/lops-oh-fair2adapt/")
 BASE_PATH = HPC_PREFIX / "riomar" / "GAMAR"
-CATALOG_PATH = HPC_PREFIX / "riomar-virtualizarr"
+CATALOG_PATH = HPC_PREFIX / "riomar-virtualizarr2"
 YEARS = range(2001, 2024)
 
 LOADABLE_VARS = [
@@ -110,8 +110,9 @@ def main() -> None:
         print(year, "year")
 
         pattern = str(BASE_PATH / f"GAMAR_1h_inst_Y{year}*.nc")
-        files = glob.glob(pattern)
-        print("files:", len(files))
+        #files = glob.glob(pattern)
+        files = sorted(glob.glob(pattern))
+        print("files:",files,  len(files))
 
         if not files:
             print("No files found for", year, "- skipping\n")
@@ -122,6 +123,7 @@ def main() -> None:
         dss = client.gather(futures)
 
         # Concat into one virtual dataset
+        dss = sorted(dss, key=lambda _ds: _ds["time_counter"].values[0])
         ds = (
             xr.concat(
                 dss,
@@ -132,6 +134,7 @@ def main() -> None:
             )
             .set_coords(["time_counter_bounds", "time_instant_bounds"])
         )
+        #ds = ds.sortby("time_counter")
 
         print(ds)
 
