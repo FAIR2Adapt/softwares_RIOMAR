@@ -41,7 +41,7 @@ def run():
     #CATALOG_PATH  = "riomar-virtualizarr/Y2023.json"
     CATALOG_PATH  = "riomar-virtualizarr/YALL.json"
     OUT_PARQUET   = "riomar_3months_.parq"   # local parquet refs cache
-    OUT_ZARR   = "riomar-zarr_tina/ALL.zarr"  # local parquet refs cache
+    OUT_ZARR   = "riomar-zarr_tina/ALL_pc.zarr"  # local parquet refs cache
 
 
     def patch_kc_refs_inplace(kc, hpc_prefix=HPC_PREFIX, https_prefix=HTTPS_PREFIX):
@@ -322,17 +322,19 @@ def run():
     print(ds_roi_1d)
 
 
-    block = time_chunk_size   # 48 (or 24*100 etc.)
+    block = time_chunk_size*100   # 48 (or 24*100 etc.)
     nt = ds_roi_1d.sizes["time_counter"]
     #nt = 2 
     first = True
 
-    ds_roi_1d=ds_roi_1d.chunk({"time_counter": time_chunk_size})
+    ds_roi_1d=ds_roi_1d.chunk({"time_counter": time_chunk_size})  #.persist()
+    print('ds_roi_1d')
+    print(ds_roi_1d)
 
     for t0 in range(0, nt, block):
         t1 = min(nt, t0 + block)
 
-        ds_in  = to_healpix(ds_roi_1d.isel(time_counter=slice(t0, t1)))
+        ds_in  = to_healpix(ds_roi_1d.isel(time_counter=slice(t0, t1)).persist())
 
         if first:
             ds_in.to_zarr(zarr_hp_file_path, mode="w", consolidated=False, safe_chunks=False)

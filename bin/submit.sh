@@ -25,7 +25,8 @@ echo "Python: $(which python)"
 python --version
 
 # --- run ---
-#python Create_healpix_processes.py > run.log 2>&1
+python Create_healpix_from_nc.py > run_nc.log 2>&1
+#python Create_healpix_processes.py > run_process.log 2>&1
 #python Create_healpix.py > run.log 2>&1
-python Create_healpix_processes_patched.py > run.log 2>&1
+#python Create_healpix_processes_patched.py > run_patch.log 2>&1
 ~
