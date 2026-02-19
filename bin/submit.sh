@@ -27,7 +27,8 @@ python --version
 # --- run ---
 #python Create_healpix_from_nc.py > run_nc.log 2>&1
 echo "python Create_healpix_processes_by_year.py  2>&1"
-python Create_healpix_processes_by_year.py  > run_process_all.log 2>&1
+#python Create_healpix_processes_by_year.py  > run_process_all.log 2>&1
+ipython -c "%run Create_healpix_processes_by_year.py"  > run_process_zchunk.log 2>&1
 #python Create_healpix.py > run.log 2>&1
 #python Create_healpix_processes_patched.py > run_patch.log 2>&1
 ~

@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# this takes 4 s
 #
 from __future__ import annotations
 
 import os
 from pathlib import Path
-
 import geopandas as gpd
 import numpy as np
 import psutil
@@ -23,9 +21,10 @@ import healpix_geo
 HPC_PREFIX = "/scale/project/lops-oh-fair2adapt/"
 CATALOG_PATH = HPC_PREFIX + "riomar-virtualizarr"
 YEARS = range(2001, 2024)
-time_chunk_size = 24  # 1 day as a chunk
+time_chunk_size = 24 *90 # 1 day as a chunk
+z_chunk_size = 1  # 1 day as a chunk
 child_level=13
-OUT_ZARR   = HPC_PREFIX + "riomar-zarr_tina/ALL.zarr"   
+OUT_ZARR   = HPC_PREFIX + "riomar-zarr_tina/ALL_chunkz.zarr"   
 n_workers=16
 block = time_chunk_size*n_workers   # 48 (or 24*100 etc.)
 os.environ["PYTHONUNBUFFERED"] = "1"
@@ -57,7 +56,7 @@ def start_client() -> Client:
             processes=True,
             memory_limit=memory_limit,
             local_directory=str(local_dir),
-            dashboard_address=":8787",  # if port busy, Dask will auto-pick another
+            dashboard_address=":0",  # if port busy, Dask will auto-pick another
         )
     else:
         print("HPC prefix not found; starting default LocalCluster()")
@@ -76,11 +75,6 @@ def start_client() -> Client:
     print(f"Total threads: {total_threads}")
     print(f"Total memory limit: {total_mem_gb:.2f} GB\n")
     return client
-
-
-
-
-
 def apply_polygon_mask(
     ds: xr.Dataset,
     poly,
@@ -154,7 +148,6 @@ def apply_polygon_mask(
 def to_healpix(ds_in,parent_ids,parent_level):
     from regrid_to_healpix.regrid_to_healpix_bilinear import Set
 
-
     lon = ds_in["nav_lon_rho"].values.astype(np.float64)
     lat = ds_in["nav_lat_rho"].values.astype(np.float64)
 
@@ -168,7 +161,6 @@ def to_healpix(ds_in,parent_ids,parent_level):
 
     # Apply to the whole Dataset: only to chosen data_vars
     #vars_to_regrid = ["temp"]  # add "salt", "zeta", ...
-
 
     ds_hp = xr.apply_ufunc(
         to_healpix_point,
@@ -208,8 +200,10 @@ def to_healpix(ds_in,parent_ids,parent_level):
     #
     return  (
         ds_hp.reindex(cell_ids=target_ids, fill_value=np.nan)
-        .chunk({"cell_ids": chunk_size},{"time_counter": time_chunk_size})
-    )
+        .chunk({"cell_ids": chunk_size},
+               {"time_counter": time_chunk_size},
+               {"s_rho": z_chunk_size}
+         ))
 
 
 def main() -> None:
@@ -218,7 +212,7 @@ def main() -> None:
     with np.load("parent_ids.npz") as data:
         parent_ids = data["parent_ids"]
         parent_level = int(data["parent_level"])
-    gdf=gpd.read_file("outer_boundary.geojson"), driver="GeoJSON")
+    gdf=gpd.read_file("outer_boundary.geojson")#, driver="GeoJSON")
     poly = gdf.geometry.iloc[0]  
     first = True
     for year in YEARS:
