@@ -1,0 +1,44 @@
+name: Generate CodeMeta with SOMEF
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  codemeta:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install SOMEF
+        run: |
+          python -m pip install --upgrade pip
+          pip install somef
+
+      - name: Configure SOMEF (auto)
+        run: somef configure -a
+
+      - name: Generate codemeta.json
+        env:
+          REPO_URL: https://github.com/${{ github.repository }}
+        run: |
+          # -t is required; -c writes the codemeta output file
+          somef describe -r "$REPO_URL" -t 0.8 -c codemeta.json
+
+      - name: Upload codemeta.json as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codemeta
+          path: codemeta.json
