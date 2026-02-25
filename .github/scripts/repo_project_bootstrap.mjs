@@ -28,10 +28,20 @@ async function gql(query, variables) {
 
   const json = await res.json();
   if (!res.ok || json.errors) {
-    console.error("GraphQL error response:", JSON.stringify(json, null, 2));
-    throw new Error("GraphQL request failed");
+    const err = new Error("GraphQL request failed");
+    err.graphql = json;
+    throw err;
   }
   return json.data;
+}
+
+function isArgumentNotAccepted(err, argumentName) {
+  const errors = err?.graphql?.errors || [];
+  return errors.some(
+    (e) =>
+      e?.extensions?.code === "argumentNotAccepted" &&
+      e?.extensions?.argumentName === argumentName
+  );
 }
 
 async function getRepoId(owner, repo) {
@@ -54,7 +64,7 @@ async function getUserId(login) {
   if (!data.user?.id) {
     throw new Error(
       `Could not resolve ACTOR_LOGIN "${login}" to a User. ` +
-      `If this run is triggered by a bot (e.g., github-actions[bot]) you must choose another owner.`
+        `If this run is triggered by a bot (e.g., github-actions[bot]), pick another owner.`
     );
   }
   return data.user.id;
@@ -73,20 +83,48 @@ async function findUserProject(userLogin, title) {
   return nodes.find((p) => p.title === title) || null;
 }
 
-async function createProjectLinkedToRepo(ownerUserId, repoId, title) {
-  const m = `
+async function createProjectForUser(ownerUserId, title, repoId) {
+  // Try with repositoryId (singular)
+  const mWithRepo = `
     mutation($ownerId: ID!, $title: String!, $repoId: ID!) {
       createProjectV2(input: {
         ownerId: $ownerId,
         title: $title,
-        repositoryIds: [$repoId]
+        repositoryId: $repoId
       }) {
         projectV2 { id title number }
       }
     }
   `;
-  const data = await gql(m, { ownerId: ownerUserId, title, repoId });
-  return data.createProjectV2.projectV2;
+
+  // Fallback without linking
+  const mNoRepo = `
+    mutation($ownerId: ID!, $title: String!) {
+      createProjectV2(input: {
+        ownerId: $ownerId,
+        title: $title
+      }) {
+        projectV2 { id title number }
+      }
+    }
+  `;
+
+  try {
+    const data = await gql(mWithRepo, { ownerId: ownerUserId, title, repoId });
+    return { project: data.createProjectV2.projectV2, linkedToRepo: true };
+  } catch (err) {
+    if (isArgumentNotAccepted(err, "repositoryId")) {
+      console.log(
+        'Note: GraphQL schema does not accept "repositoryId" on createProjectV2 in this environment. ' +
+          "Creating the project without linking to the repo."
+      );
+      const data = await gql(mNoRepo, { ownerId: ownerUserId, title });
+      return { project: data.createProjectV2.projectV2, linkedToRepo: false };
+    }
+    // Re-throw with details
+    console.error("GraphQL error response:", JSON.stringify(err.graphql, null, 2));
+    throw err;
+  }
 }
 
 async function listFields(projectId) {
@@ -167,21 +205,28 @@ async function setSingleSelect(projectId, itemId, fieldId, optionId) {
 }
 
 (async () => {
+  console.log(`Repo: ${REPO_OWNER}/${REPO_NAME}`);
+  console.log(`Actor (project owner): ${ACTOR_LOGIN}`);
+
   const repoId = await getRepoId(REPO_OWNER, REPO_NAME);
   const actorUserId = await getUserId(ACTOR_LOGIN);
 
-  console.log(`Repo: ${REPO_OWNER}/${REPO_NAME}`);
-  console.log(`Project owner (actor): ${ACTOR_LOGIN}`);
-
   let project = await findUserProject(ACTOR_LOGIN, PROJECT_TITLE);
+  let linkedToRepo = false;
 
   if (!project) {
-    project = await createProjectLinkedToRepo(actorUserId, repoId, PROJECT_TITLE);
+    const created = await createProjectForUser(actorUserId, PROJECT_TITLE, repoId);
+    project = created.project;
+    linkedToRepo = created.linkedToRepo;
     console.log(`Created project: "${project.title}" (#${project.number})`);
   } else {
     console.log(`Found existing project: "${project.title}" (#${project.number})`);
+  }
+
+  if (!linkedToRepo) {
     console.log(
-      `Note: If it doesn't show under the repo's Projects tab, ensure the project is linked to the repo.`
+      "If you want it to appear in the repo's Projects tab automatically, " +
+        "you may need to link the project to the repo in the Project settings UI (depends on GitHub environment)."
     );
   }
 
@@ -193,20 +238,20 @@ async function setSingleSelect(projectId, itemId, fieldId, optionId) {
 
   if (!statusField) {
     statusField = await createStatusField(project.id);
-    console.log(`Created "Status" field`);
+    console.log('Created "Status" field (Todo / In progress / Done)');
   } else {
-    console.log(`"Status" field already exists`);
+    console.log('"Status" field already exists');
   }
 
   const todoOption = statusField.options.find((o) => o.name === "Todo");
-  if (!todoOption) console.log(`Warning: "Todo" option not found; skipping status set`);
+  if (!todoOption) console.log('Warning: "Todo" option not found; skipping status set');
 
   for (const title of ITEMS) {
     const itemId = await addDraftItem(project.id, title);
     console.log(`Added draft item: ${title}`);
     if (todoOption) {
       await setSingleSelect(project.id, itemId, statusField.id, todoOption.id);
-      console.log(`  -> Status set to Todo`);
+      console.log("  -> Status set to Todo");
     }
   }
 
