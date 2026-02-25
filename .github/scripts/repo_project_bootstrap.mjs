@@ -1,10 +1,15 @@
 import process from "node:process";
 
 const GH_TOKEN = process.env.GH_TOKEN;
-const OWNER = process.env.OWNER;
+const OWNER = process.env.OWNER; // org or username
 const REPO = process.env.REPO;
 const PROJECT_TITLE = process.env.PROJECT_TITLE;
 const ITEMS = JSON.parse(process.env.ITEMS_JSON || "[]");
+
+if (!GH_TOKEN) throw new Error("Missing GH_TOKEN");
+if (!OWNER) throw new Error("Missing OWNER");
+if (!REPO) throw new Error("Missing REPO");
+if (!PROJECT_TITLE) throw new Error("Missing PROJECT_TITLE");
 
 async function gql(query, variables) {
   const res = await fetch("https://api.github.com/graphql", {
@@ -15,48 +20,72 @@ async function gql(query, variables) {
     },
     body: JSON.stringify({ query, variables }),
   });
+
   const json = await res.json();
   if (!res.ok || json.errors) {
-    console.error(JSON.stringify(json, null, 2));
+    console.error("GraphQL error response:", JSON.stringify(json, null, 2));
     throw new Error("GraphQL request failed");
   }
   return json.data;
 }
 
-async function getRepoId() {
+async function getRepoId(owner, repo) {
   const q = `
     query($owner: String!, $repo: String!) {
       repository(owner: $owner, name: $repo) { id }
     }
   `;
-  const data = await gql(q, { owner: OWNER, repo: REPO });
+  const data = await gql(q, { owner, repo });
   return data.repository.id;
 }
 
-async function findProject(repoId, title) {
+async function getOwnerId(login) {
   const q = `
-    query($repoId: ID!) {
-      node(id: $repoId) {
-        ... on Repository {
-          projectsV2(first: 50) { nodes { id title number } }
-        }
+    query($login: String!) {
+      organization(login: $login) { id }
+      user(login: $login) { id }
+    }
+  `;
+  const data = await gql(q, { login });
+  const id = data.organization?.id ?? data.user?.id;
+  if (!id) throw new Error(`Could not resolve owner login: ${login}`);
+  return id;
+}
+
+async function findOwnerProject(ownerLogin, title) {
+  // We look under org OR user based on which exists for OWNER
+  const q = `
+    query($login: String!) {
+      organization(login: $login) {
+        projectsV2(first: 50) { nodes { id title number } }
+      }
+      user(login: $login) {
+        projectsV2(first: 50) { nodes { id title number } }
       }
     }
   `;
-  const data = await gql(q, { repoId });
-  const nodes = data.node.projectsV2.nodes || [];
-  return nodes.find((p) => p.title === title) || null;
+  const data = await gql(q, { login: ownerLogin });
+  const projects =
+    data.organization?.projectsV2?.nodes ??
+    data.user?.projectsV2?.nodes ??
+    [];
+  return projects.find((p) => p.title === title) || null;
 }
 
-async function createProject(repoId, title) {
+async function createProjectLinkedToRepo(ownerId, repoId, title) {
+  // Link to repo using repositoryIds so it appears in repo's Projects tab.
   const m = `
-    mutation($ownerId: ID!, $title: String!) {
-      createProjectV2(input: { ownerId: $ownerId, title: $title }) {
+    mutation($ownerId: ID!, $title: String!, $repoId: ID!) {
+      createProjectV2(input: {
+        ownerId: $ownerId,
+        title: $title,
+        repositoryIds: [$repoId]
+      }) {
         projectV2 { id title number }
       }
     }
   `;
-  const data = await gql(m, { ownerId: repoId, title });
+  const data = await gql(m, { ownerId, title, repoId });
   return data.createProjectV2.projectV2;
 }
 
@@ -81,11 +110,10 @@ async function listFields(projectId) {
     }
   `;
   const data = await gql(q, { projectId });
-  return data.node.fields.nodes;
+  return data.node.fields.nodes ?? [];
 }
 
 async function createStatusField(projectId) {
-  // SINGLE_SELECT options are specified when creating the field. :contentReference[oaicite:3]{index=3}
   const m = `
     mutation($projectId: ID!) {
       createProjectV2Field(input: {
@@ -139,40 +167,46 @@ async function setSingleSelect(projectId, itemId, fieldId, optionId) {
 }
 
 (async () => {
-  if (!GH_TOKEN) throw new Error("Missing GH_TOKEN");
-  if (!OWNER || !REPO) throw new Error("Missing OWNER/REPO");
+  const repoId = await getRepoId(OWNER, REPO);
+  const ownerId = await getOwnerId(OWNER);
 
-  const repoId = await getRepoId();
+  let project = await findOwnerProject(OWNER, PROJECT_TITLE);
 
-  let project = await findProject(repoId, PROJECT_TITLE);
   if (!project) {
-    project = await createProject(repoId, PROJECT_TITLE);
-    console.log(`Created repo project: ${project.title} (#${project.number})`);
+    project = await createProjectLinkedToRepo(ownerId, repoId, PROJECT_TITLE);
+    console.log(`Created project: "${project.title}" (#${project.number})`);
   } else {
-    console.log(`Found repo project: ${project.title} (#${project.number})`);
+    console.log(`Found existing project: "${project.title}" (#${project.number})`);
+    console.log(
+      `Note: if you just created it manually, ensure it's linked to this repo in Project settings.`
+    );
   }
 
   // Ensure Status field exists
-  let fields = await listFields(project.id);
-  let status = fields.find((f) => f.__typename === "ProjectV2SingleSelectField" && f.name === "Status");
+  const fields = await listFields(project.id);
+  let statusField = fields.find(
+    (f) => f.__typename === "ProjectV2SingleSelectField" && f.name === "Status"
+  );
 
-  if (!status) {
-    status = await createStatusField(project.id);
-    console.log(`Created Status field`);
+  if (!statusField) {
+    statusField = await createStatusField(project.id);
+    console.log(`Created "Status" field with Todo / In progress / Done`);
   } else {
-    console.log(`Status field already exists`);
+    console.log(`"Status" field already exists`);
   }
 
-  const todoOption = status.options.find((o) => o.name === "Todo");
-  const fieldId = status.id;
+  const todoOption = statusField.options.find((o) => o.name === "Todo");
+  if (!todoOption) {
+    console.log(`Warning: "Todo" option not found; skipping status set`);
+  }
 
-  // Add draft items and set them to Todo
-  for (const t of ITEMS) {
-    const itemId = await addDraftItem(project.id, t);
-    console.log(`Added draft item: ${t}`);
-    if (todoOption?.id) {
-      await setSingleSelect(project.id, itemId, fieldId, todoOption.id);
-      console.log(`  -> Status: Todo`);
+  for (const title of ITEMS) {
+    const itemId = await addDraftItem(project.id, title);
+    console.log(`Added draft item: ${title}`);
+
+    if (todoOption) {
+      await setSingleSelect(project.id, itemId, statusField.id, todoOption.id);
+      console.log(`  -> Status set to Todo`);
     }
   }
 
