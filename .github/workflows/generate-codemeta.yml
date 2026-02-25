@@ -33,6 +33,8 @@ jobs:
         run: somef configure -a
 
       - name: Generate codemeta.json
+        env: 
+          REPO_URL: https://github.com/${{ github.repository }}
         run: |
           somef describe -r . -t 0.8 -c codemeta.json
 
