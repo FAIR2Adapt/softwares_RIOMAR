@@ -36,27 +36,22 @@ jobs:
         env: 
           REPO_URL: https://github.com/${{ github.repository }}
         run: |
-          somef describe -r . -t 0.8 -c codemeta.json
+          somef describe -r -r "$REPO_URL" -t 0.8 -c codemeta.json
 
       - name: Commit and push codemeta.json (only if created and not already tracked)
         if: github.event_name != 'pull_request'
         run: |
-          # If SOMEF didn't produce the file, don't fail the workflow
-          if [ ! -f codemeta.json ]; then
-            echo "codemeta.json was not generated. Skipping commit."
-            exit 0
-          fi
       
           # If codemeta.json is already tracked in the repo, don't add/commit it
           if git ls-files --error-unmatch codemeta.json > /dev/null 2>&1; then
             echo "codemeta.json is already tracked in the repository. Skipping git add/commit."
             exit 0
+          else: 
+            git add codemeta.json
           fi
       
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-          git add codemeta.json
       
           # Commit only if staging has changes (defensive)
           if ! git diff --cached --quiet; then
