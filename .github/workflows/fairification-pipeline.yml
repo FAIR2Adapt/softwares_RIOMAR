@@ -1,0 +1,26 @@
+name: Create FAIRification Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_title:
+        required: true
+        default: "Task Board"
+      items_json:
+        required: true
+        default: '["Initial task 1","Initial task 2"]'
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create repo project + add draft items
+        env:
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          PROJECT_TITLE: ${{ inputs.project_title }}
+          ITEMS_JSON: ${{ inputs.items_json }}
+        run: node .github/scripts/repo_project_bootstrap.mjs
