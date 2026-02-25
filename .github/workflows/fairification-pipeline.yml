@@ -19,8 +19,14 @@ jobs:
       - name: Create repo project + add draft items
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.event.repository.name }}
+
+          # Repo (where the Projects tab should show the project)
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+
+          # Person who clicked “Run workflow” (or triggered it)
+          ACTOR_LOGIN: ${{ github.actor }}
+
           PROJECT_TITLE: ${{ inputs.project_title }}
           ITEMS_JSON: ${{ inputs.items_json }}
         run: node .github/scripts/repo_project_bootstrap.mjs
