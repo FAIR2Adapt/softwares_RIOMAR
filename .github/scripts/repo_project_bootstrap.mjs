@@ -1,14 +1,19 @@
 import process from "node:process";
 
 const GH_TOKEN = process.env.GH_TOKEN;
-const OWNER = process.env.OWNER; // repo owner login (org or user)
-const REPO = process.env.REPO;
+
+const REPO_OWNER = process.env.REPO_OWNER;
+const REPO_NAME = process.env.REPO_NAME;
+
+const ACTOR_LOGIN = process.env.ACTOR_LOGIN;
+
 const PROJECT_TITLE = process.env.PROJECT_TITLE;
 const ITEMS = JSON.parse(process.env.ITEMS_JSON || "[]");
 
 if (!GH_TOKEN) throw new Error("Missing GH_TOKEN");
-if (!OWNER) throw new Error("Missing OWNER");
-if (!REPO) throw new Error("Missing REPO");
+if (!REPO_OWNER) throw new Error("Missing REPO_OWNER");
+if (!REPO_NAME) throw new Error("Missing REPO_NAME");
+if (!ACTOR_LOGIN) throw new Error("Missing ACTOR_LOGIN");
 if (!PROJECT_TITLE) throw new Error("Missing PROJECT_TITLE");
 
 async function gql(query, variables) {
@@ -29,50 +34,46 @@ async function gql(query, variables) {
   return json.data;
 }
 
-// Single source of truth: ask the repository for BOTH repoId and ownerId
-async function getRepoAndOwnerIds(owner, repo) {
+async function getRepoId(owner, repo) {
   const q = `
     query($owner: String!, $repo: String!) {
-      repository(owner: $owner, name: $repo) {
-        id
-        owner {
-          __typename
-          id
-          login
-        }
-      }
+      repository(owner: $owner, name: $repo) { id }
     }
   `;
   const data = await gql(q, { owner, repo });
-  return {
-    repoId: data.repository.id,
-    ownerId: data.repository.owner.id,
-    ownerType: data.repository.owner.__typename,
-    ownerLogin: data.repository.owner.login,
-  };
+  return data.repository.id;
 }
 
-async function findOwnerProject(ownerLogin, title) {
-  // We still list projects via org/user, but now we won't error for unknown types
+async function getUserId(login) {
   const q = `
     query($login: String!) {
-      organization(login: $login) {
-        projectsV2(first: 50) { nodes { id title number } }
-      }
+      user(login: $login) { id login }
+    }
+  `;
+  const data = await gql(q, { login });
+  if (!data.user?.id) {
+    throw new Error(
+      `Could not resolve ACTOR_LOGIN "${login}" to a User. ` +
+      `If this run is triggered by a bot (e.g., github-actions[bot]) you must choose another owner.`
+    );
+  }
+  return data.user.id;
+}
+
+async function findUserProject(userLogin, title) {
+  const q = `
+    query($login: String!) {
       user(login: $login) {
         projectsV2(first: 50) { nodes { id title number } }
       }
     }
   `;
-  const data = await gql(q, { login: ownerLogin });
-  const projects =
-    data.organization?.projectsV2?.nodes ??
-    data.user?.projectsV2?.nodes ??
-    [];
-  return projects.find((p) => p.title === title) || null;
+  const data = await gql(q, { login: userLogin });
+  const nodes = data.user?.projectsV2?.nodes ?? [];
+  return nodes.find((p) => p.title === title) || null;
 }
 
-async function createProjectLinkedToRepo(ownerId, repoId, title) {
+async function createProjectLinkedToRepo(ownerUserId, repoId, title) {
   const m = `
     mutation($ownerId: ID!, $title: String!, $repoId: ID!) {
       createProjectV2(input: {
@@ -84,7 +85,7 @@ async function createProjectLinkedToRepo(ownerId, repoId, title) {
       }
     }
   `;
-  const data = await gql(m, { ownerId, title, repoId });
+  const data = await gql(m, { ownerId: ownerUserId, title, repoId });
   return data.createProjectV2.projectV2;
 }
 
@@ -166,22 +167,25 @@ async function setSingleSelect(projectId, itemId, fieldId, optionId) {
 }
 
 (async () => {
-  const { repoId, ownerId, ownerType, ownerLogin } = await getRepoAndOwnerIds(
-    OWNER,
-    REPO
-  );
+  const repoId = await getRepoId(REPO_OWNER, REPO_NAME);
+  const actorUserId = await getUserId(ACTOR_LOGIN);
 
-  console.log(`Repo owner: ${ownerLogin} (${ownerType})`);
+  console.log(`Repo: ${REPO_OWNER}/${REPO_NAME}`);
+  console.log(`Project owner (actor): ${ACTOR_LOGIN}`);
 
-  let project = await findOwnerProject(ownerLogin, PROJECT_TITLE);
+  let project = await findUserProject(ACTOR_LOGIN, PROJECT_TITLE);
 
   if (!project) {
-    project = await createProjectLinkedToRepo(ownerId, repoId, PROJECT_TITLE);
+    project = await createProjectLinkedToRepo(actorUserId, repoId, PROJECT_TITLE);
     console.log(`Created project: "${project.title}" (#${project.number})`);
   } else {
     console.log(`Found existing project: "${project.title}" (#${project.number})`);
+    console.log(
+      `Note: If it doesn't show under the repo's Projects tab, ensure the project is linked to the repo.`
+    );
   }
 
+  // Ensure Status field exists
   const fields = await listFields(project.id);
   let statusField = fields.find(
     (f) => f.__typename === "ProjectV2SingleSelectField" && f.name === "Status"
