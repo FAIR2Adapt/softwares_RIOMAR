@@ -1,7 +1,7 @@
 import process from "node:process";
 
 const GH_TOKEN = process.env.GH_TOKEN;
-const OWNER = process.env.OWNER; // org or username
+const OWNER = process.env.OWNER; // repo owner login (org or user)
 const REPO = process.env.REPO;
 const PROJECT_TITLE = process.env.PROJECT_TITLE;
 const ITEMS = JSON.parse(process.env.ITEMS_JSON || "[]");
@@ -29,31 +29,31 @@ async function gql(query, variables) {
   return json.data;
 }
 
-async function getRepoId(owner, repo) {
+// Single source of truth: ask the repository for BOTH repoId and ownerId
+async function getRepoAndOwnerIds(owner, repo) {
   const q = `
     query($owner: String!, $repo: String!) {
-      repository(owner: $owner, name: $repo) { id }
+      repository(owner: $owner, name: $repo) {
+        id
+        owner {
+          __typename
+          id
+          login
+        }
+      }
     }
   `;
   const data = await gql(q, { owner, repo });
-  return data.repository.id;
-}
-
-async function getOwnerId(login) {
-  const q = `
-    query($login: String!) {
-      organization(login: $login) { id }
-      user(login: $login) { id }
-    }
-  `;
-  const data = await gql(q, { login });
-  const id = data.organization?.id ?? data.user?.id;
-  if (!id) throw new Error(`Could not resolve owner login: ${login}`);
-  return id;
+  return {
+    repoId: data.repository.id,
+    ownerId: data.repository.owner.id,
+    ownerType: data.repository.owner.__typename,
+    ownerLogin: data.repository.owner.login,
+  };
 }
 
 async function findOwnerProject(ownerLogin, title) {
-  // We look under org OR user based on which exists for OWNER
+  // We still list projects via org/user, but now we won't error for unknown types
   const q = `
     query($login: String!) {
       organization(login: $login) {
@@ -73,7 +73,6 @@ async function findOwnerProject(ownerLogin, title) {
 }
 
 async function createProjectLinkedToRepo(ownerId, repoId, title) {
-  // Link to repo using repositoryIds so it appears in repo's Projects tab.
   const m = `
     mutation($ownerId: ID!, $title: String!, $repoId: ID!) {
       createProjectV2(input: {
@@ -167,22 +166,22 @@ async function setSingleSelect(projectId, itemId, fieldId, optionId) {
 }
 
 (async () => {
-  const repoId = await getRepoId(OWNER, REPO);
-  const ownerId = await getOwnerId(OWNER);
+  const { repoId, ownerId, ownerType, ownerLogin } = await getRepoAndOwnerIds(
+    OWNER,
+    REPO
+  );
 
-  let project = await findOwnerProject(OWNER, PROJECT_TITLE);
+  console.log(`Repo owner: ${ownerLogin} (${ownerType})`);
+
+  let project = await findOwnerProject(ownerLogin, PROJECT_TITLE);
 
   if (!project) {
     project = await createProjectLinkedToRepo(ownerId, repoId, PROJECT_TITLE);
     console.log(`Created project: "${project.title}" (#${project.number})`);
   } else {
     console.log(`Found existing project: "${project.title}" (#${project.number})`);
-    console.log(
-      `Note: if you just created it manually, ensure it's linked to this repo in Project settings.`
-    );
   }
 
-  // Ensure Status field exists
   const fields = await listFields(project.id);
   let statusField = fields.find(
     (f) => f.__typename === "ProjectV2SingleSelectField" && f.name === "Status"
@@ -190,20 +189,17 @@ async function setSingleSelect(projectId, itemId, fieldId, optionId) {
 
   if (!statusField) {
     statusField = await createStatusField(project.id);
-    console.log(`Created "Status" field with Todo / In progress / Done`);
+    console.log(`Created "Status" field`);
   } else {
     console.log(`"Status" field already exists`);
   }
 
   const todoOption = statusField.options.find((o) => o.name === "Todo");
-  if (!todoOption) {
-    console.log(`Warning: "Todo" option not found; skipping status set`);
-  }
+  if (!todoOption) console.log(`Warning: "Todo" option not found; skipping status set`);
 
   for (const title of ITEMS) {
     const itemId = await addDraftItem(project.id, title);
     console.log(`Added draft item: ${title}`);
-
     if (todoOption) {
       await setSingleSelect(project.id, itemId, statusField.id, todoOption.id);
       console.log(`  -> Status set to Todo`);
