@@ -20,7 +20,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PROJECTS_PAT }}
           PROJECT_TITLE: "My Board"
           ITEMS_FILE: "project-items.json"
-          OWNER: ${{ github.repository_owner }}
+          OWNER: ${{ github.actor }}
         run: |
           set -euo pipefail
 
