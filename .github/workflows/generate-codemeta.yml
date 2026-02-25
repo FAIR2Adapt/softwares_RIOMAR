@@ -36,7 +36,7 @@ jobs:
         env: 
           REPO_URL: https://github.com/${{ github.repository }}
         run: |
-          somef describe -r -r "$REPO_URL" -t 0.8 -c codemeta.json
+          somef describe -r "$REPO_URL" -t 0.8 -c codemeta.json
 
       - name: Commit and push codemeta.json (only if created and not already tracked)
         if: github.event_name != 'pull_request'
