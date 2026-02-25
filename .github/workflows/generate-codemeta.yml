@@ -7,7 +7,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write   # needed to push changes
 
 jobs:
   codemeta:
@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,14 +33,21 @@ jobs:
         run: somef configure -a
 
       - name: Generate codemeta.json
-        env:
-          REPO_URL: https://github.com/${{ github.repository }}
         run: |
-          # -t is required; -c writes the codemeta output file
-          somef describe -r "$REPO_URL" -t 0.8 -c codemeta.json
+          somef describe -r . -t 0.8 -c codemeta.json
 
-      - name: Upload codemeta.json as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: codemeta
-          path: codemeta.json
+      - name: Commit and push if changed
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add codemeta.json
+
+          # Only commit if there are changes
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: auto-generate codemeta.json with SOMEF"
+            git push
+          else
+            echo "No changes to commit."
+          fi
