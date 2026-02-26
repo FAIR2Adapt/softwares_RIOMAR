@@ -20,9 +20,10 @@ jobs:
           GH_TOKEN: ${{ secrets.PROJECTS_PAT || github.token }}
           PROJECT_TITLE: "My Board"
           ITEMS_FILE: "project-items.json"
-          OWNER: ${{ github.actor }}
+          OWNER: ${{ github.repository_owner }}
         run: |
           echo "GH_TOKEN is set? -> ${GH_TOKEN:+yes}"
+          echo $OWNER
           
           set -euo pipefail
 
