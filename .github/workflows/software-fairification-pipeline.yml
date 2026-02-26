@@ -50,21 +50,24 @@ jobs:
             exit 1
           fi
           echo "Searching for Project titled: $PROJECT_TITLE"
-          echo "Searching for Project titled: $PROJECT_TITLE"
-
           PROJECT_ID=$(gh api graphql -f query='
             query($login:String!) {
               repositoryOwner(login:$login) {
-                projectsV2(first:100) {
-                  nodes { id title }
+                ... on User {
+                  projectsV2(first:100) { nodes { id title } }
+                }
+                ... on Organization {
+                  projectsV2(first:100) { nodes { id title } }
                 }
               }
-            }' \
-            -F login="$OWNER" \
-            --jq '.data.repositoryOwner.projectsV2.nodes
-                  | map(select(.title == env.PROJECT_TITLE))
-                  | .[0].id // empty')
-
+            }' -F login="$OWNER" \
+            --jq '
+              (
+                (.data.repositoryOwner.projectsV2.nodes // [])
+              )
+              | map(select(.title == env.PROJECT_TITLE))
+              | .[0].id // empty
+            ')
           if [ -z "${PROJECT_ID:-}" ]; then
             echo "Project not found. Creating it..."
             PROJECT_ID=$(gh api graphql -f query='
