@@ -33,36 +33,37 @@ jobs:
           fi
 
           echo "Looking up owner ID for: $OWNER"
+          echo "Looking up owner ID for: $OWNER"
+
           OWNER_ID=$(gh api graphql -f query='
             query($login:String!) {
-              user(login:$login) { id }
-              organization(login:$login) { id }
-            }' -F login="$OWNER" --jq '.data.user.id // .data.organization.id')
-
+              repositoryOwner(login:$login) {
+                id
+                login
+              }
+            }' \
+            -F login="$OWNER" \
+            --jq '.data.repositoryOwner.id')
+          
           if [ -z "$OWNER_ID" ] || [ "$OWNER_ID" = "null" ]; then
             echo "Could not resolve owner ID for $OWNER"
             exit 1
           fi
-
           echo "Searching for Project titled: $PROJECT_TITLE"
+          echo "Searching for Project titled: $PROJECT_TITLE"
+
           PROJECT_ID=$(gh api graphql -f query='
-            query($login:String!, $title:String!) {
-              user(login:$login) {
-                projectsV2(first:100) { nodes { id title } }
-              }
-              organization(login:$login) {
-                projectsV2(first:100) { nodes { id title } }
+            query($login:String!) {
+              repositoryOwner(login:$login) {
+                projectsV2(first:100) {
+                  nodes { id title }
+                }
               }
             }' \
-            -F login="$OWNER" -F title="$PROJECT_TITLE" \
-            --jq '
-              (
-                (.data.user.projectsV2.nodes // []) +
-                (.data.organization.projectsV2.nodes // [])
-              )
-              | map(select(.title == env.PROJECT_TITLE))
-              | .[0].id // empty
-            ')
+            -F login="$OWNER" \
+            --jq '.data.repositoryOwner.projectsV2.nodes
+                  | map(select(.title == env.PROJECT_TITLE))
+                  | .[0].id // empty')
 
           if [ -z "${PROJECT_ID:-}" ]; then
             echo "Project not found. Creating it..."
