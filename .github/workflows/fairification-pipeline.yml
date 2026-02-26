@@ -24,7 +24,7 @@ jobs:
           PROJECTS_TOKEN: ${{ secrets.FAIRIFICATION }}
 
           # 👇 CHANGE THESE
-          PROJECT_OWNER: YOUR_ORG_OR_USER
+          PROJECT_OWNER: Fair2Adapt
           PROJECT_NUMBER: "1"
 
           STATUS_FIELD_NAME: "Status"
