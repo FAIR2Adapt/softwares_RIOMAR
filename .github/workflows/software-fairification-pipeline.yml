@@ -17,11 +17,13 @@ jobs:
 
       - name: Ensure Project exists and add items
         env:
-          GH_TOKEN: ${{ secrets.PROJECTS_PAT }}
+          GH_TOKEN: ${{ secrets.PROJECTS_PAT || github.token }}
           PROJECT_TITLE: "My Board"
           ITEMS_FILE: "project-items.json"
           OWNER: ${{ github.actor }}
         run: |
+          echo "GH_TOKEN is set? -> ${GH_TOKEN:+yes}"
+          
           set -euo pipefail
 
           if [ ! -f "$ITEMS_FILE" ]; then
