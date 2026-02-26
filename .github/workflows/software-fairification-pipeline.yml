@@ -18,7 +18,7 @@ jobs:
       - name: Ensure Project exists and add items
         env:
           GH_TOKEN: ${{ secrets.PROJECTS_PAT || github.token }}
-          PROJECT_TITLE: "My Board"
+          PROJECT_TITLE: "FAIRification pipeline"
           ITEMS_FILE: "project-items.json"
           OWNER: ${{ github.repository_owner }}
         run: |
