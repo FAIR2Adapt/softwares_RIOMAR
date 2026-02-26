@@ -3,30 +3,174 @@ name: Create FAIRification Pipeline
 on:
   workflow_dispatch:
     inputs:
-      project_title:
+      items_file:
+        description: "Path to the JSON file in the repo (e.g. project-items.json)"
         required: true
-        default: "Task Board"
-      items_json:
-        required: true
-        default: '["Initial task 1","Initial task 2"]'
+        default: "project-items.json"
+
+permissions:
+  contents: read
 
 jobs:
-  bootstrap:
+  import_items:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo (to read the file)
+        uses: actions/checkout@v4
 
-      - name: Create repo project + add draft items
+      - name: Create draft items in Project and set Status=ToDo
+        uses: actions/github-script@v7
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
 
-          # Repo (where the Projects tab should show the project)
-          REPO_OWNER: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
+          # 👇 CHANGE THESE
+          PROJECT_OWNER: YOUR_ORG_OR_USER
+          PROJECT_NUMBER: "1"
 
-          # Person who clicked “Run workflow” (or triggered it)
-          ACTOR_LOGIN: ${{ github.actor }}
+          STATUS_FIELD_NAME: "Status"
+          TODO_OPTION_NAME: "ToDo"
+        with:
+          github-token: ${{ env.PROJECTS_TOKEN }}
+          script: |
+            const fs = require("fs");
 
-          PROJECT_TITLE: ${{ inputs.project_title }}
-          ITEMS_JSON: ${{ inputs.items_json }}
-        run: node .github/scripts/repo_project_bootstrap.mjs
+            const owner = process.env.PROJECT_OWNER;
+            const projectNumber = parseInt(process.env.PROJECT_NUMBER, 10);
+            const statusFieldName = process.env.STATUS_FIELD_NAME;
+            const todoOptionName = process.env.TODO_OPTION_NAME;
+
+            const itemsFile = core.getInput("items_file") || context.payload.inputs.items_file;
+            if (!itemsFile) core.setFailed("No items_file provided");
+
+            const raw = fs.readFileSync(itemsFile, "utf8");
+            const items = JSON.parse(raw);
+
+            if (!Array.isArray(items) || items.length === 0) {
+              core.setFailed("items_file must be a non-empty JSON array");
+              return;
+            }
+
+            for (const [i, it] of items.entries()) {
+              if (!it?.title || typeof it.title !== "string") {
+                core.setFailed(`Item #${i} missing required "title"`);
+                return;
+              }
+            }
+
+            // 1) Find Project + Status field + ToDo option (works for both org or user owner)
+            const projectQuery = `
+              query($owner: String!, $number: Int!) {
+                user(login: $owner) {
+                  projectV2(number: $number) {
+                    id
+                    fields(first: 100) {
+                      nodes {
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options { id name }
+                        }
+                        ... on ProjectV2FieldCommon {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+                organization(login: $owner) {
+                  projectV2(number: $number) {
+                    id
+                    fields(first: 100) {
+                      nodes {
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options { id name }
+                        }
+                        ... on ProjectV2FieldCommon {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const projectResp = await github.graphql(projectQuery, { owner, number: projectNumber });
+            const project =
+              projectResp.organization?.projectV2 ??
+              projectResp.user?.projectV2;
+
+            if (!project) {
+              core.setFailed(`Project v2 not found for owner=${owner} number=${projectNumber}`);
+              return;
+            }
+
+            const statusField = project.fields.nodes.find(
+              f => f.name === statusFieldName && f.options
+            );
+            if (!statusField) {
+              core.setFailed(`Single-select field "${statusFieldName}" not found in Project`);
+              return;
+            }
+
+            const todoOption = statusField.options.find(o => o.name === todoOptionName);
+            if (!todoOption) {
+              core.setFailed(`Option "${todoOptionName}" not found in "${statusFieldName}" field`);
+              return;
+            }
+
+            // 2) Create draft items and set Status = ToDo
+            const addDraftMutation = `
+              mutation($projectId: ID!, $title: String!, $body: String) {
+                addProjectV2DraftIssue(input: {
+                  projectId: $projectId
+                  title: $title
+                  body: $body
+                }) {
+                  projectItem { id }
+                }
+              }
+            `;
+
+            const setStatusMutation = `
+              mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $projectId
+                  itemId: $itemId
+                  fieldId: $fieldId
+                  value: { singleSelectOptionId: $optionId }
+                }) {
+                  projectV2Item { id }
+                }
+              }
+            `;
+
+            let created = 0;
+            for (const it of items) {
+              const title = it.title.trim();
+              const body = (it.body ?? "").toString();
+
+              const added = await github.graphql(addDraftMutation, {
+                projectId: project.id,
+                title,
+                body: body.length ? body : null
+              });
+
+              const itemId = added.addProjectV2DraftIssue.projectItem.id;
+
+              await github.graphql(setStatusMutation, {
+                projectId: project.id,
+                itemId,
+                fieldId: statusField.id,
+                optionId: todoOption.id
+              });
+
+              created++;
+              core.info(`Created: "${title}" (itemId=${itemId}) with ${statusFieldName}=${todoOptionName}`);
+            }
+
+            core.notice(`Done. Created ${created} ToDo items in Project #${projectNumber}.`);
