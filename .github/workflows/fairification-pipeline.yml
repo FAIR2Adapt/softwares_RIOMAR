@@ -21,7 +21,7 @@ jobs:
       - name: Create draft items in Project and set Status=ToDo
         uses: actions/github-script@v7
         env:
-          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          PROJECTS_TOKEN: ${{ secrets.FAIRIFICATION }}
 
           # 👇 CHANGE THESE
           PROJECT_OWNER: YOUR_ORG_OR_USER
