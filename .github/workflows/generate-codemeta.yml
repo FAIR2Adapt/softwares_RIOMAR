@@ -2,9 +2,6 @@ name: Generate CodeMeta with SOMEF
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
-  pull_request:
 
 permissions:
   contents: write   # needed to push changes
