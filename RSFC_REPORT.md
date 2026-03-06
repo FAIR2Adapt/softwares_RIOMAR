@@ -6,7 +6,7 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 
 - **Software:** softwares_RIOMAR
 - **Repository:** https://github.com/FAIR2Adapt/softwares_RIOMAR
-- **Assessment date:** 2026-03-06T10:52:21Z
+- **Assessment date:** 2026-03-06T10:58:18Z
 - **Total checks:** 41
 
 ## Summary
