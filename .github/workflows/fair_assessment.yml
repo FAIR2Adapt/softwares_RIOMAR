@@ -1,4 +1,4 @@
-name: "Run RSFC"
+name: "FAIR Asessment"
 
 on:
   workflow_dispatch:
