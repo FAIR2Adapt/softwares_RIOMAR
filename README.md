@@ -1,5 +1,9 @@
 # RIOMAR → HEALPix (DGGS) regridding notebooks
 
+<!-- QUALITY_BADGE_START -->
+[![Software quality](https://img.shields.io/badge/Metadata%20quality-32%25-red "score: 32% | passed: 13 | failed: 27 | errors: 1")](RSFC_REPORT.md)
+<!-- QUALITY_BADGE_END -->
+
 This folder contains the end-to-end workflow to:
 
 1.  Define a Region Of Interest (ROI) from a lon/lat bounding box\
