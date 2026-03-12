@@ -1,0 +1,32 @@
+version: 1
+
+project:
+  title: RIOMAR — HEALPix Regridding
+  github: https://github.com/FAIR2Adapt/softwares_RIOMAR
+
+  toc:
+    - file: README.md
+    - title: Workflow
+      children:
+        - file: notebook/Create_ROI_from_bbox.ipynb
+        - file: notebook/Prep_regrid.ipynb
+        - file: notebook/regrid_apply_ufunc.ipynb
+        - file: notebook/Create_healpix.ipynb
+    - title: Visualization
+      children:
+        - file: notebook/load_and_plot.ipynb
+        - file: notebook/simple_regrid.ipynb
+        - file: notebook/Define_healpix_Parent_chunk.ipynb
+    - title: Kerchunk & Icechunk experiments
+      children:
+        - file: notebook/M1_Kerchunk_Create_Virtualizarr_Gamar.ipynb
+        - file: notebook/M1_Kerchunk_Create_Virtualizarr_Gamar_withDask.ipynb
+        - file: notebook/M1_bof_Kerchunk_Create_Virtualizarr_Gamar-MultiZarr.ipynb
+        - file: notebook/M2_Icechunk_Create_Virtualizarr_Gamar_withDask.ipynb
+        - file: notebook/M2_Icechunk_Use_Virtualizarr_Gamar.ipynb
+    - title: Contributing
+      children:
+        - file: CONTRIBUTING.md
+
+site:
+  template: book-theme
