@@ -158,7 +158,7 @@ Singularity container definitions are in `singularity_images/f2a_riomar/`
     Experiments on parent levels together with bounding boxes.
 
 -   `simple_regrid.ipynb` —
-    Tests alternative regridding methods available in `regrid_to_healpix`.
+    Tests alternative regridding methods available in `healpix-resample`.
 
 -   `M1_*` / `M2_*` notebooks —
     Experiments with Kerchunk/Icechunk/VirtualiZarr creation and loading on Datarmor.

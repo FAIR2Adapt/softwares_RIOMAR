@@ -92,18 +92,18 @@ def main():
     # Build operator once
 
     def to_healpix(ds_in):
-        from regrid_to_healpix.regrid_to_healpix_bilinear import Set
+        from healpix_resample import BilinearResampler
 
 
         lon = ds_in["nav_lon_rho"].values.astype(np.float64)
         lat = ds_in["nav_lat_rho"].values.astype(np.float64)
 
-        nr = Set(lon_deg=lon, lat_deg=lat, level=child_level, device="cpu", threshold=0.5, ellipsoid="WGS84")
+        nr = BilinearResampler(lon_deg=lon, lat_deg=lat, level=child_level, device="cpu", threshold=0.5, ellipsoid="WGS84")
         cell_ids = np.asarray(nr.get_cell_ids(), dtype=np.int64)
         ncell = int(cell_ids.size)
 
         def to_healpix_point(data_1d):
-            out = nr.transform(np.asarray(data_1d, dtype=np.float64), lam=0.1)
+            out = nr.resample(np.asarray(data_1d, dtype=np.float64), lam=0.1).cell_data
             return np.asarray(out, dtype=np.float64)
 
         # Apply to the whole Dataset: only to chosen data_vars

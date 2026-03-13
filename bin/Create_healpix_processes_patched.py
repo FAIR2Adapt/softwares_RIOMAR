@@ -264,13 +264,13 @@ def run():
     lon = ds_geom["nav_lon_rho"].values.astype(np.float64)
     lat = ds_geom["nav_lat_rho"].values.astype(np.float64)
 
-    from regrid_to_healpix.regrid_to_healpix_bilinear import Set
-    nr = Set(lon_deg=lon, lat_deg=lat, level=child_level, device="cpu", threshold=0.5, ellipsoid="WGS84")
+    from healpix_resample import BilinearResampler
+    nr = BilinearResampler(lon_deg=lon, lat_deg=lat, level=child_level, device="cpu", threshold=0.5, ellipsoid="WGS84")
     cell_ids = np.asarray(nr.get_cell_ids(), dtype=np.int64)
     ncell = int(cell_ids.size)
 
     def to_healpix_point(data_1d):
-        out = nr.transform(np.asarray(data_1d, dtype=np.float64), lam=0.1)
+        out = nr.resample(np.asarray(data_1d, dtype=np.float64), lam=0.1).cell_data
         return np.asarray(out, dtype=np.float64)
 
     # 5) Target cell ids for your final region-of-interest

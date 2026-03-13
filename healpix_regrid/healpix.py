@@ -37,7 +37,7 @@ def to_healpix(
     lon_name, lat_name : str
         Coordinate names for longitude / latitude.
     device : str
-        ``"cpu"`` or ``"cuda"`` (passed to ``regrid_to_healpix``).
+        ``"cpu"`` or ``"cuda"`` (passed to ``healpix-resample``).
     lam : float
         Smoothing parameter for the bilinear transform.
 
@@ -47,12 +47,12 @@ def to_healpix(
         HEALPix-indexed dataset aligned to the ROI cell IDs, chunked and
         ready for Zarr output.
     """
-    from regrid_to_healpix.regrid_to_healpix_bilinear import Set
+    from healpix_resample import BilinearResampler
 
     lon = ds_in[lon_name].values.astype(np.float64)
     lat = ds_in[lat_name].values.astype(np.float64)
 
-    nr = Set(
+    nr = BilinearResampler(
         lon_deg=lon,
         lat_deg=lat,
         level=child_level,
@@ -64,8 +64,8 @@ def to_healpix(
     ncell = int(cell_ids.size)
 
     def _transform(data_1d):
-        out = nr.transform(np.asarray(data_1d, dtype=np.float64), lam=lam)
-        return np.asarray(out, dtype=np.float64)
+        result = nr.resample(np.asarray(data_1d, dtype=np.float64), lam=lam)
+        return np.asarray(result.cell_data, dtype=np.float64)
 
     ds_hp = xr.apply_ufunc(
         _transform,
