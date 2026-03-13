@@ -1,21 +1,53 @@
-# RIOMAR → HEALPix (DGGS) regridding notebooks
+# RIOMAR — HEALPix (DGGS) regridding
 
 <!-- QUALITY_BADGE_START -->
 [![Software quality](https://img.shields.io/badge/FAIRness-32%25-red "score: 32% | passed: 13 | failed: 27 | errors: 1")](RSFC_REPORT.md)
 <!-- QUALITY_BADGE_END -->
 
-This folder contains the end-to-end workflow to:
+This repository provides an end-to-end workflow to regrid ocean model data
+(RiOMar/GAMAR) from curvilinear grids to
+[HEALPix](https://healpix.jpl.nasa.gov/) (DGGS) format using xarray, Dask,
+and Kerchunk. It runs both locally (HTTPS mode) and on HPC infrastructure.
 
-1.  Define a Region Of Interest (ROI) from a lon/lat bounding box\
+1.  Define a Region Of Interest (ROI) from a lon/lat bounding box
 2.  Prepare a temporary *small* Zarr dataset (for fast iteration and
-    reproducible testing)\
-3.  Regrid variables to HEALPix using `regrid_to_healpix` (via
-    `xarray.apply_ufunc`)\
-4.  (Later) Scale the same workflow to the full dataset on HPC and
+    reproducible testing)
+3.  Regrid variables to HEALPix using `healpix_regrid` (via
+    `xarray.apply_ufunc`)
+4.  Scale the same workflow to the full dataset on HPC and
     publish the resulting Zarr
 
 The workflow assumes geographic coordinates in **EPSG:4326** and HEALPix
 (WGS84) **nested indexing**.
+
+------------------------------------------------------------------------
+
+## Installation
+
+```bash
+# 1. Create the conda environment
+conda env create -f notebook/environment.yml
+conda activate riomar
+
+# 2. Install the healpix_regrid package in editable mode
+pip install -e ".[test]"
+```
+
+## Running tests
+
+```bash
+python -m pytest tests/ -v
+```
+
+## Repository structure
+
+```
+healpix_regrid/         Reusable Python package (masking, kerchunk, dask, regridding)
+tests/                  Pytest test suite for healpix_regrid
+notebook/               Jupyter notebooks (interactive workflow & exploration)
+bin/                    Python scripts for HPC batch runs
+singularity_images/     Singularity container definitions
+```
 
 ------------------------------------------------------------------------
 
@@ -69,27 +101,29 @@ scratch.
 **Notebook:** `regrid_apply_ufunc.ipynb`
 
 **Purpose** - Load the temporary Zarr created in **B**\
-- Build the HEALPix operator once (from `nav_lon_*` / `nav_lat_*`)\
-- Regrid selected variables with `xarray.apply_ufunc`\
+- Regrid selected variables to HEALPix using `healpix_regrid.to_healpix`\
 - Align output to ROI-derived `cell_ids` (drop extra cells, fill missing
 with `np.nan`)\
 - Save a HEALPix-aligned, chunked Zarr
 
-
 **Output** - A HEALPix-indexed dataset with a `cell_ids` coordinate
 (nested indexing)
 
-**TODO** - align may be better to be taken care of in the function used in apply_u_func..
-
 ------------------------------------------------------------------------
 
-## Scaling to HPC ("big scale" run)
+## Scaling to HPC
 
-(Documentation to be added.)
+On HPC (Datarmor), the `bin/` scripts run the same pipeline as the notebooks.
+Scripts auto-detect the environment by checking whether the HPC filesystem
+(`/scale/project/lops-oh-fair2adapt/`) exists.
 
-Planned publication target (once validated):
+```bash
+# Submit a PBS job
+qsub bin/submit.sh
+```
 
-    https://data-fair2adapt.ifremer.fr/riomar-zarr/small_hp.zarr
+Singularity container definitions are in `singularity_images/f2a_riomar/`
+(layered build: hardened Debian base -> conda scientific stack -> JupyterHub).
 
 ------------------------------------------------------------------------
 
@@ -120,15 +154,21 @@ Planned publication target (once validated):
 
 ## Extra notebooks
 
--   `Define_healpix_parent_chunk.ipynb`\
+-   `Define_healpix_Parent_chunk.ipynb` —
     Experiments on parent levels together with bounding boxes.
 
--   `simple_regrid.ipynb`\
-    Tests alternative regridding methods available in
-    `regrid_to_healpix`.
+-   `simple_regrid.ipynb` —
+    Tests alternative regridding methods available in `healpix-resample`.
 
--   Notebooks experimenting with Kerchunk creation and loading on
-    Datarmor\
-    `M1_Kerchunk_Create_Virtualizarr_Gamar.ipynb                M2_Icechunk_Create_Virtualizarr_Gamar_withDask.ipynb
-M1_Kerchunk_Create_Virtualizarr_Gamar_withDask.ipynb       M2_Icechunk_Use_Virtualizarr_Gamar.ipynb
-M1_bof_Kerchunk_Create_Virtualizarr_Gamar-MultiZarr.ipynb `
+-   `M1_*` / `M2_*` notebooks —
+    Experiments with Kerchunk/Icechunk/VirtualiZarr creation and loading on Datarmor.
+
+------------------------------------------------------------------------
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).

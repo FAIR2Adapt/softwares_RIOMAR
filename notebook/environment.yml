@@ -35,6 +35,7 @@ dependencies:
   # filesystem / http
   - fsspec
   - requests
+  - aiohttp
 
   # kerchunk backend for xarray (engine="kerchunk")
   - kerchunk
