@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["healpix_regrid*"]
+
+[project]
+name = "healpix-regrid"
+version = "0.1.0"
+description = "Regrid curvilinear ocean model grids to HEALPix (DGGS) with xarray and Dask"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "xarray",
+    "dask[distributed]",
+    "zarr",
+    "shapely>=2",
+    "geopandas",
+    "healpix-geo",
+    "psutil",
+]
+
+[project.optional-dependencies]
+kerchunk = ["kerchunk", "fsspec", "virtualizarr"]
+test = ["pytest"]
+lint = ["pre-commit", "ruff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+"notebook/*.ipynb" = ["F821", "E402"]

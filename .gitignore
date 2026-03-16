@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Jupyter Book build output
+_build/
+
 # C extensions
 *.so
 

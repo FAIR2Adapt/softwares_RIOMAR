@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-from functools import partial
-from pathlib import Path
 import glob
 import os
+from functools import partial
+from pathlib import Path
 
 import psutil
 import xarray as xr
 from dask.distributed import Client, LocalCluster
-
 from obstore.store import LocalStore
 from virtualizarr import open_virtual_dataset
 from virtualizarr.parsers import HDFParser
 from virtualizarr.registry import ObjectStoreRegistry
-
 
 # -----------------------------------------------------------------------------
 # Config
@@ -48,7 +46,7 @@ def start_client() -> Client:
         total_gb = psutil.virtual_memory().total / (1024**3)
 
         # Reasonable defaults; tune if needed
-        n_workers = min(cpu, 32)              # cap at 32 like you intended
+        n_workers = min(cpu, 32)  # cap at 32 like you intended
         threads_per_worker = 1
         memory_limit_gb = (total_gb * 0.85) / n_workers
         memory_limit = f"{memory_limit_gb:.2f}GB"
@@ -110,9 +108,9 @@ def main() -> None:
         print(year, "year")
 
         pattern = str(BASE_PATH / f"GAMAR_1h_inst_Y{year}*.nc")
-        #files = glob.glob(pattern)
+        # files = glob.glob(pattern)
         files = sorted(glob.glob(pattern))
-        print("files:",files,  len(files))
+        print("files:", files, len(files))
 
         if not files:
             print("No files found for", year, "- skipping\n")
@@ -124,17 +122,14 @@ def main() -> None:
 
         # Concat into one virtual dataset
         dss = sorted(dss, key=lambda _ds: _ds["time_counter"].values[0])
-        ds = (
-            xr.concat(
-                dss,
-                dim="time_counter",
-                compat="override",
-                coords="minimal",
-                combine_attrs="drop_conflicts",
-            )
-            .set_coords(["time_counter_bounds", "time_instant_bounds"])
-        )
-        #ds = ds.sortby("time_counter")
+        ds = xr.concat(
+            dss,
+            dim="time_counter",
+            compat="override",
+            coords="minimal",
+            combine_attrs="drop_conflicts",
+        ).set_coords(["time_counter_bounds", "time_instant_bounds"])
+        # ds = ds.sortby("time_counter")
 
         print(ds)
 

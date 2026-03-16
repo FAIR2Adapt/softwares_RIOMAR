@@ -6,14 +6,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+
 import geopandas as gpd
+import healpix_geo
 import numpy as np
 import psutil
 import xarray as xr
 import zarr
 from dask.distributed import Client, LocalCluster
-
-import healpix_geo
 
 # -----------------------------------------------------------------------------
 # Config
@@ -21,12 +21,12 @@ import healpix_geo
 HPC_PREFIX = "/scale/project/lops-oh-fair2adapt/"
 CATALOG_PATH = HPC_PREFIX + "riomar-virtualizarr"
 YEARS = range(2001, 2024)
-time_chunk_size = 24 *90 # 1 day as a chunk
+time_chunk_size = 24 * 90  # 1 day as a chunk
 z_chunk_size = 1  # 1 day as a chunk
-child_level=13
-OUT_ZARR   = HPC_PREFIX + "riomar-zarr_tina/ALL_chunkz.zarr"   
-n_workers=16
-block = time_chunk_size*n_workers   # 48 (or 24*100 etc.)
+child_level = 13
+OUT_ZARR = HPC_PREFIX + "riomar-zarr_tina/ALL_chunkz.zarr"
+n_workers = 16
+block = time_chunk_size * n_workers  # 48 (or 24*100 etc.)
 os.environ["PYTHONUNBUFFERED"] = "1"
 
 
@@ -38,12 +38,12 @@ def start_client() -> Client:
         local_dir = Path("/tmp") / "dask-scratch"
         local_dir.mkdir(parents=True, exist_ok=True)
 
-        cpu = os.cpu_count() or 1
+        os.cpu_count() or 1
         total_gb = psutil.virtual_memory().total / (1024**3)
 
         # Reasonable defaults; tune if needed
-        #n_workers = min(cpu, 32)              # cap at 32 like you intended
-        n_workers = 16                        # cap at 32 like you intended
+        # n_workers = min(cpu, 32)              # cap at 32 like you intended
+        n_workers = 16  # cap at 32 like you intended
         threads_per_worker = 1
         memory_limit_gb = (total_gb * 0.85) / n_workers
         memory_limit = f"{memory_limit_gb:.2f}GB"
@@ -75,6 +75,8 @@ def start_client() -> Client:
     print(f"Total threads: {total_threads}")
     print(f"Total memory limit: {total_mem_gb:.2f} GB\n")
     return client
+
+
 def apply_polygon_mask(
     ds: xr.Dataset,
     poly,
@@ -113,6 +115,7 @@ def apply_polygon_mask(
     try:
         # shapely>=2
         from shapely import contains_xy
+
         mask_np = contains_xy(poly, lon, lat)
     except Exception:
         # fallback (fast-ish, but only uses exterior ring)
@@ -141,26 +144,35 @@ def apply_polygon_mask(
     )
 
     # Attach mask (as a coord, like you were doing)
-    return ds.assign_coords({mask_name: mask_da}).where(mask_da)#,drop=True)
+    return ds.assign_coords({mask_name: mask_da}).where(mask_da)  # ,drop=True)
+
 
 # Build operator once
 
-def to_healpix(ds_in,parent_ids,parent_level):
-    from regrid_to_healpix.regrid_to_healpix_bilinear import Set
+
+def to_healpix(ds_in, parent_ids, parent_level):
+    from healpix_resample import BilinearResampler
 
     lon = ds_in["nav_lon_rho"].values.astype(np.float64)
     lat = ds_in["nav_lat_rho"].values.astype(np.float64)
 
-    nr = Set(lon_deg=lon, lat_deg=lat, level=child_level, device="cpu", threshold=0.5, ellipsoid="WGS84")
+    nr = BilinearResampler(
+        lon_deg=lon,
+        lat_deg=lat,
+        level=child_level,
+        device="cpu",
+        threshold=0.5,
+        ellipsoid="WGS84",
+    )
     cell_ids = np.asarray(nr.get_cell_ids(), dtype=np.int64)
     ncell = int(cell_ids.size)
 
     def to_healpix_point(data_1d):
-        out = nr.transform(np.asarray(data_1d, dtype=np.float64), lam=0.1)
+        out = nr.resample(np.asarray(data_1d, dtype=np.float64), lam=0.1).cell_data
         return np.asarray(out, dtype=np.float64)
 
     # Apply to the whole Dataset: only to chosen data_vars
-    #vars_to_regrid = ["temp"]  # add "salt", "zeta", ...
+    # vars_to_regrid = ["temp"]  # add "salt", "zeta", ...
 
     ds_hp = xr.apply_ufunc(
         to_healpix_point,
@@ -176,44 +188,44 @@ def to_healpix(ds_in,parent_ids,parent_level):
 
     # Re-attach coordinate + its metadata
     ds_hp = ds_hp.assign_coords(cell_ids=("cell_ids", cell_ids))
-    ds_hp["cell_ids"].attrs.update({
-        "grid_name": "healpix",
-        "level": 13,
-        "indexing_scheme": "nested",
-        "ellipsoid": "WGS84",
-    })
-
+    ds_hp["cell_ids"].attrs.update(
+        {
+            "grid_name": "healpix",
+            "level": 13,
+            "indexing_scheme": "nested",
+            "ellipsoid": "WGS84",
+        }
+    )
 
     # compute the child id from the final interest region
-    aligned_child_ids = np.unique(healpix_geo.nested.zoom_to(
-        parent_ids,
-        depth=parent_level,
-        new_depth=child_level
-    ))
+    aligned_child_ids = np.unique(
+        healpix_geo.nested.zoom_to(
+            parent_ids, depth=parent_level, new_depth=child_level
+        )
+    )
 
     # Make sure types match (important: your ds_hp cell_ids look like int64)
     target_ids = aligned_child_ids.astype(ds_hp["cell_ids"].dtype)
-    #compute the chunk size 
-    chunk_size=4**(child_level - parent_level )
+    # compute the chunk size
+    chunk_size = 4 ** (child_level - parent_level)
 
     # aline the fill non existing values with np.nan, and take out non interestd zone
     #
-    return  (
-        ds_hp.reindex(cell_ids=target_ids, fill_value=np.nan)
-        .chunk({"cell_ids": chunk_size},
-               {"time_counter": time_chunk_size},
-               {"s_rho": z_chunk_size}
-         ))
+    return ds_hp.reindex(cell_ids=target_ids, fill_value=np.nan).chunk(
+        {"cell_ids": chunk_size},
+        {"time_counter": time_chunk_size},
+        {"s_rho": z_chunk_size},
+    )
 
 
 def main() -> None:
-    client = start_client()
+    start_client()
 
     with np.load("parent_ids.npz") as data:
         parent_ids = data["parent_ids"]
         parent_level = int(data["parent_level"])
-    gdf=gpd.read_file("outer_boundary.geojson")#, driver="GeoJSON")
-    poly = gdf.geometry.iloc[0]  
+    gdf = gpd.read_file("outer_boundary.geojson")  # , driver="GeoJSON")
+    poly = gdf.geometry.iloc[0]
     first = True
     for year in YEARS:
         print(year, "year")
@@ -222,37 +234,44 @@ def main() -> None:
 
         print("loading kerchunk_catalog", KERCHUNK_CATALOG)
 
-        ds = xr.open_dataset(KERCHUNK_CATALOG, engine="kerchunk", chunks={})[['temp','salt','zeta']]
+        ds = xr.open_dataset(KERCHUNK_CATALOG, engine="kerchunk", chunks={})[
+            ["temp", "salt", "zeta"]
+        ]
         ds = ds.assign_coords(
             nav_lon_rho=ds["nav_lon_rho"].load(),
             nav_lat_rho=ds["nav_lat_rho"].load(),
-            )
+        )
         print(ds)
         if first:
-            #2. Trim the dataset  with polygon mask : zeta_mask
-            #3. Find out which values are 'ground' by  computing not null values of zeta at time_counter=0 : zeta_mask
-            zeta_mask= apply_polygon_mask(
-            ds.zeta.isel(time_counter=0).compute(),
-            poly).notnull().compute()
-            #zeta_mask
-        print('zeta_mask',zeta_mask)
+            # 2. Trim the dataset  with polygon mask : zeta_mask
+            # 3. Find out which values are 'ground' by computing
+            # not null values of zeta at time_counter=0
+            zeta_mask = (
+                apply_polygon_mask(ds.zeta.isel(time_counter=0).compute(), poly)
+                .notnull()
+                .compute()
+            )
+            # zeta_mask
+        print("zeta_mask", zeta_mask)
 
         nt = ds.sizes["time_counter"]
-        #nt = time_chunk_size*3
+        # nt = time_chunk_size*3
         for t0 in range(0, nt, block):
             t1 = min(nt, t0 + block)
             ds_roi = ds.isel(time_counter=slice(t0, t1))
-            ds_roi['zeta_mask']=zeta_mask
+            ds_roi["zeta_mask"] = zeta_mask
 
-            ds_roi_1d=ds_roi.stack(point=("y_rho", "x_rho") )
+            ds_roi_1d = ds_roi.stack(point=("y_rho", "x_rho"))
 
-            ds_roi_1d = ds_roi_1d.where(ds_roi_1d.zeta_mask,drop=True).drop_vars('zeta_mask')
-            print('ds_roi_1d', ds_roi_1d)
-            ds_in=ds_roi_1d.chunk({"time_counter": time_chunk_size}).persist()
-            print('persist ds_in',ds_in)
-            ds_in  = to_healpix(ds_in,parent_ids,parent_level)
-            print('computed ds_in',ds_in)
-    
+            ds_roi_1d = ds_roi_1d.where(ds_roi_1d.zeta_mask, drop=True).drop_vars(
+                "zeta_mask"
+            )
+            print("ds_roi_1d", ds_roi_1d)
+            ds_in = ds_roi_1d.chunk({"time_counter": time_chunk_size}).persist()
+            print("persist ds_in", ds_in)
+            ds_in = to_healpix(ds_in, parent_ids, parent_level)
+            print("computed ds_in", ds_in)
+
             if first:
                 ds_in.to_zarr(OUT_ZARR, mode="w", consolidated=False, safe_chunks=False)
                 first = False
@@ -264,11 +283,11 @@ def main() -> None:
                     consolidated=False,
                     safe_chunks=False,
                 )
-    
+
         # consolidate once (optional)
 
     zarr.consolidate_metadata(OUT_ZARR)
 
-if __name__ == '__main__':
-    main()
 
+if __name__ == "__main__":
+    main()
