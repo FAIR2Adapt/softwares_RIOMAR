@@ -31,6 +31,9 @@ jobs:
       - name: Build the book
         run: npx mystmd build --site
 
+      - name: List build output
+        run: find _build -maxdepth 3 -type f | head -30
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
