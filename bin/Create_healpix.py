@@ -1,16 +1,17 @@
 # this takes 4 s
 #
 import json
-import fsspec
-from pathlib import Path
 import os
-import psutil
-from dask.distributed import Client, LocalCluster
-import xarray as xr
-import numpy as np
+from pathlib import Path
 
-import xdggs
+import fsspec
+import geopandas as gpd
 import healpix_geo
+import numpy as np
+import psutil
+import xarray as xr
+import zarr
+from dask.distributed import Client, LocalCluster
 
 time_chunk_size = 24  # 1 day as a chunk
 #time_chunk_size = 1  # 1 day as a chunk
@@ -21,7 +22,7 @@ with np.load("parent_ids.npz") as data:
     parent_ids = data["parent_ids"]
     parent_level = int(data["parent_level"])
 
-    
+
 
 HPC_PREFIX    = "/scale/project/lops-oh-fair2adapt/"
 HTTPS_PREFIX  = "https://data-fair2adapt.ifremer.fr/"
@@ -67,13 +68,13 @@ if Path(HPC_PREFIX).exists():
     )
     local_dir = str(Path(local_dir) / "dask-scratch")
     print("Using Dask local_directory:", local_dir)
-    
-    
+
+
     print("=== Starting local Dask cluster (auto-sized) ===")
-    
+
     cpu = os.cpu_count() or 1
     total_gb = psutil.virtual_memory().total / (1024**3)
-    
+
     # Good “use most, but not all” defaults:
     n_workers = cpu                   # ~1 worker per CPU core
     threads_per_worker = 1            # best for numpy-heavy compute
@@ -89,23 +90,24 @@ if Path(HPC_PREFIX).exists():
 #        dashboard_address=":8787",
     )
     client = Client(cluster)
-    
+
     print("Dask dashboard:", client.dashboard_link)
-    
+
     print("\n=== Dask cluster resources ===")
     info = client.scheduler_info()
     workers = info["workers"]
-    
+
     total_threads = sum(w["nthreads"] for w in workers.values())
     total_mem_gb = sum(w["memory_limit"] for w in workers.values()) / (1024**3)
-    
+
     print(f"Workers: {len(workers)}")
     print(f"Total threads: {total_threads}")
     print(f"Total memory limit: {total_mem_gb:.2f} GB")
-    
+
     # Optional: per-worker details
     #for addr, w in workers.items():
-     #   print(f"- {addr}: nthreads={w['nthreads']}, mem_limit={w['memory_limit']/1e9:.2f} GB »)
+     #   print(f"- {addr}: nthreads={w['nthreads']}, "
+     #         f"mem_limit={w['memory_limit']/1e9:.2f} GB »)
     KERCHUNK_CATALOG = HPC_PREFIX + CATALOG_PATH
     print("Running in HPC mode:", KERCHUNK_CATALOG)
 
@@ -123,9 +125,11 @@ else:
     KERCHUNK_CATALOG = HTTPS_PREFIX + CATALOG_PATH
     print("Running in HTTPS mode:", KERCHUNK_CATALOG)
     # If parquet refs already exist locally, open them (fast path)
-    # This part is commented since on the fly transformation is faster than loading the parquet file in actual config
-    # (check why at some point) 
-    # Loading from local parquet is also slower than loading json and convert the path on the fly...
+    # This part is commented since on the fly transformation
+    # is faster than loading the parquet file in actual config
+    # (check why at some point)
+    # Loading from local parquet is also slower than loading
+    # json and convert the path on the fly...
     # thus i deactivate the if here
     #if Path(OUT_PARQUET).exists():
     if False and Path(OUT_PARQUET).exists():
@@ -134,7 +138,10 @@ else:
 
     # Else: fetch JSON, patch refs to https, open, AND write parquet refs cache
     else:
-        print(f"ℹ️ No local parquet refs found at ./{OUT_PARQUET} -> creating them from JSON")
+        print(
+            f"ℹ️ No local parquet refs found at ./{OUT_PARQUET}"
+            " -> creating them from JSON"
+        )
 
         with fsspec.open(KERCHUNK_CATALOG, "rt") as f:
             kc = json.load(f)
@@ -229,23 +236,26 @@ def apply_polygon_mask(
 
 def to_healpix(ds_in):
     from healpix_resample import BilinearResampler
-    
-    
+
+
     lon = ds_in["nav_lon_rho"].values.astype(np.float64)
     lat = ds_in["nav_lat_rho"].values.astype(np.float64)
-    
-    nr = BilinearResampler(lon_deg=lon, lat_deg=lat, level=child_level, device="cpu", threshold=0.5, ellipsoid="WGS84")
+
+    nr = BilinearResampler(
+        lon_deg=lon, lat_deg=lat, level=child_level,
+        device="cpu", threshold=0.5, ellipsoid="WGS84",
+    )
     cell_ids = np.asarray(nr.get_cell_ids(), dtype=np.int64)
     ncell = int(cell_ids.size)
-    
+
     def to_healpix_point(data_1d):
         out = nr.resample(np.asarray(data_1d, dtype=np.float64), lam=0.1).cell_data
         return np.asarray(out, dtype=np.float64)
-    
+
     # Apply to the whole Dataset: only to chosen data_vars
     #vars_to_regrid = ["temp"]  # add "salt", "zeta", ...
-    
-    
+
+
     ds_hp = xr.apply_ufunc(
         to_healpix_point,
         ds_in,
@@ -257,7 +267,7 @@ def to_healpix(ds_in):
         dask_gufunc_kwargs={"output_sizes": {"cell_ids": ncell}},
         keep_attrs=True,  # keep dataset + variable attrs where possible
     )
-    
+
     # Re-attach coordinate + its metadata
     ds_hp = ds_hp.assign_coords(cell_ids=("cell_ids", cell_ids))
     ds_hp["cell_ids"].attrs.update({
@@ -266,20 +276,20 @@ def to_healpix(ds_in):
         "indexing_scheme": "nested",
         "ellipsoid": "WGS84",
     })
-    
-    
+
+
     # compute the child id from the final interest region
     aligned_child_ids = np.unique(healpix_geo.nested.zoom_to(
         parent_ids,
         depth=parent_level,
         new_depth=child_level
     ))
-                                  
+
     # Make sure types match (important: your ds_hp cell_ids look like int64)
     target_ids = aligned_child_ids.astype(ds_hp["cell_ids"].dtype)
-    #compute the chunk size 
+    #compute the chunk size
     chunk_size=4**(child_level - parent_level )
-    
+
     # aline the fill non existing values with np.nan, and take out non interestd zone
     #
     return  (
@@ -287,13 +297,13 @@ def to_healpix(ds_in):
         .chunk({"cell_ids": chunk_size},{"time_counter": time_chunk_size})
     )
 
-import geopandas as gpd
 # 1. Read the polygon from GeoJSON.
 
-gdf=gpd.read_file("outer_boundary.geojson", driver="GeoJSON")
-poly = gdf.geometry.iloc[0]  
+gdf = gpd.read_file("outer_boundary.geojson", driver="GeoJSON")
+poly = gdf.geometry.iloc[0]
 #2. Trim the dataset  with polygon mask : zeta_mask
-#3. Find out which values are 'ground' by  computing not null values of zeta at time_counter=0 : zeta_mask
+# 3. Find out which values are 'ground' by computing
+# not null values of zeta at time_counter=0 : zeta_mask
 
 zeta_mask= apply_polygon_mask(
     ds.zeta.isel(time_counter=0).compute(),
@@ -323,7 +333,10 @@ for t0 in range(0, nt, block):
     ds_in  = to_healpix(ds_roi_1d.isel(time_counter=slice(t0, t1)))
 
     if first:
-        ds_in.to_zarr(zarr_hp_file_path, mode="w", consolidated=False, safe_chunks=False)
+        ds_in.to_zarr(
+            zarr_hp_file_path, mode="w",
+            consolidated=False, safe_chunks=False,
+        )
         first = False
     else:
         ds_in.to_zarr(
@@ -335,5 +348,4 @@ for t0 in range(0, nt, block):
         )
 
 # consolidate once (optional)
-import zarr
 zarr.consolidate_metadata(zarr_hp_file_path)
