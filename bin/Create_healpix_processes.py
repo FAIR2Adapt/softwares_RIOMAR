@@ -301,7 +301,7 @@ def run():
         chunk_size = 4 ** (child_level - parent_level)
 
         # Align and fill non-existing values with np.nan,
-    # take out non-interested zone
+        # take out non-interested zone
         #
         return ds_hp.reindex(cell_ids=target_ids, fill_value=np.nan).chunk(
             {"cell_ids": chunk_size}, {"time_counter": time_chunk_size}
