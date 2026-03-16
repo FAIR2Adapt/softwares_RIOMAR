@@ -30,6 +30,8 @@ jobs:
 
       - name: Build the book
         run: npx mystmd build --html
+        env:
+          BASE_URL: /softwares_RIOMAR
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
