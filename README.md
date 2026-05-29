@@ -3,6 +3,7 @@
 <!-- QUALITY_BADGE_START -->
 [![Software quality](https://img.shields.io/badge/FAIRness-32%25-red "score: 32% | passed: 13 | failed: 27 | errors: 1")](RSFC_REPORT.md)
 <!-- QUALITY_BADGE_END -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20448428.svg)](https://doi.org/10.5281/zenodo.20448428)
 
 This repository provides an end-to-end workflow to regrid ocean model data
 (RiOMar/GAMAR) from curvilinear grids to
