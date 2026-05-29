@@ -1,7 +1,7 @@
 # RIOMAR — HEALPix (DGGS) regridding
 
 <!-- QUALITY_BADGE_START -->
-[![Software quality](https://img.shields.io/badge/FAIRness-32%25-red "score: 32% | passed: 13 | failed: 27 | errors: 1")](RSFC_REPORT.md)
+[![Software quality](https://img.shields.io/badge/FAIRness-79%25-green "score: 79% | passed: 33 | failed: 9 | errors: 0")](RSFC_REPORT.md)
 <!-- QUALITY_BADGE_END -->
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20448428.svg)](https://doi.org/10.5281/zenodo.20448428)
 

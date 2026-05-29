@@ -1,19 +1,19 @@
-# Quality Assessment for softwares_RIOMAR
+# Quality Assessment for softwares_RIOMAR v0.1.0
 
-An automated assessment of the softwares_RIOMAR tool based on the EVERSE software quality indicators, run on 2026-03-06.
+An automated assessment of the softwares_RIOMAR tool based on the EVERSE software quality indicators, run on 2026-05-29.
 
 ## General Information
 
 - **Software:** softwares_RIOMAR
 - **Repository:** https://github.com/FAIR2Adapt/softwares_RIOMAR
-- **Assessment date:** 2026-03-06T11:22:00Z
-- **Total checks:** 41
+- **Assessment date:** 2026-05-29T20:28:32Z
+- **Total checks:** 42
 
 ## Summary
 
-- **Passed (`true`)**: 13
-- **Failed (`false`)**: 27
-- **Errors (`error`)**: 1
+- **Passed (`true`)**: 33
+- **Failed (`false`)**: 9
+- **Errors (`error`)**: 0
 
 ## Results Table
 
@@ -26,65 +26,65 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
     </tr>
   </thead>
   <tbody>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-01-1</td>
       <td>There is an identifier and resolves</td>
-      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-01-1">false</a></td>
+      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-01-1">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-01-2</td>
       <td>There is an identifier associated with the software</td>
-      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-01-2">false</a></td>
+      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-01-2">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-01-3</td>
       <td>Software identifier follows a proper schema</td>
-      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-01-3">false</a></td>
+      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-01-3">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-03-1</td>
       <td>Software has releases</td>
-      <td><a href="#has_releases-https--w3idorg-rsfc-test-rsfc-03-1">false</a></td>
+      <td><a href="#has_releases-https--w3idorg-rsfc-test-rsfc-03-1">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-03-2</td>
       <td>Releases have an id and version number</td>
-      <td><a href="#has_releases-https--w3idorg-rsfc-test-rsfc-03-2">false</a></td>
+      <td><a href="#has_releases-https--w3idorg-rsfc-test-rsfc-03-2">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-03-3</td>
       <td>Release versions follow a community established convention</td>
-      <td><a href="#versioning_standards_use-https--w3idorg-rsfc-test-rsfc-03-3">false</a></td>
+      <td><a href="#versioning_standards_use-https--w3idorg-rsfc-test-rsfc-03-3">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-03-4</td>
       <td>Release identifiers follow the same scheme</td>
-      <td><a href="#has_releases-https--w3idorg-rsfc-test-rsfc-03-4">false</a></td>
+      <td><a href="#has_releases-https--w3idorg-rsfc-test-rsfc-03-4">true</a></td>
     </tr>
-    <tr style="background-color: #fff3cd;">
+    <tr style="background-color: #f8d7da;">
       <td>https://w3id.org/rsfc/test/RSFC-03-5</td>
       <td>Last release consistency</td>
-      <td><a href="#has_releases-https--w3idorg-rsfc-test-rsfc-03-5">error</a></td>
+      <td><a href="#has_releases-https--w3idorg-rsfc-test-rsfc-03-5">false</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-03-6</td>
       <td>Version number in metadata</td>
-      <td><a href="#descriptive_metadata-https--w3idorg-rsfc-test-rsfc-03-6">false</a></td>
+      <td><a href="#descriptive_metadata-https--w3idorg-rsfc-test-rsfc-03-6">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-04-1</td>
       <td>Metadata exists</td>
-      <td><a href="#descriptive_metadata-https--w3idorg-rsfc-test-rsfc-04-1">false</a></td>
+      <td><a href="#descriptive_metadata-https--w3idorg-rsfc-test-rsfc-04-1">true</a></td>
     </tr>
     <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-04-2</td>
       <td>There is a README</td>
       <td><a href="#software_has_documentation-https--w3idorg-rsfc-test-rsfc-04-2">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-04-3</td>
       <td>There are title and description</td>
-      <td><a href="#descriptive_metadata-https--w3idorg-rsfc-test-rsfc-04-3">false</a></td>
+      <td><a href="#descriptive_metadata-https--w3idorg-rsfc-test-rsfc-04-3">true</a></td>
     </tr>
     <tr style="background-color: #f8d7da;">
       <td>https://w3id.org/rsfc/test/RSFC-04-4</td>
@@ -131,20 +131,20 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
       <td>Authors have roles</td>
       <td><a href="#descriptive_metadata-https--w3idorg-rsfc-test-rsfc-06-4">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-07-1</td>
       <td>There is an identifier in README or CITATION.cff</td>
-      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-07-1">false</a></td>
+      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-07-1">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-07-2</td>
       <td>Software identifier resolves to software</td>
-      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-07-2">false</a></td>
+      <td><a href="#persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-07-2">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-08-1</td>
       <td>Metadata record in Software Heritage or Zenodo</td>
-      <td><a href="#archived_in_software_heritage-https--w3idorg-rsfc-test-rsfc-08-1">false</a></td>
+      <td><a href="#archived_in_software_heritage-https--w3idorg-rsfc-test-rsfc-08-1">true</a></td>
     </tr>
     <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-09-1</td>
@@ -156,10 +156,10 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
       <td>There is an article citation or reference publication</td>
       <td><a href="#software_has_citation-https--w3idorg-rsfc-test-rsfc-12-1">false</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-13-1</td>
       <td>Dependencies are declared</td>
-      <td><a href="#requirements_specified-https--w3idorg-rsfc-test-rsfc-13-1">false</a></td>
+      <td><a href="#requirements_specified-https--w3idorg-rsfc-test-rsfc-13-1">true</a></td>
     </tr>
     <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-13-2</td>
@@ -171,20 +171,20 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
       <td>Dependencies have version numbers</td>
       <td><a href="#requirements_specified-https--w3idorg-rsfc-test-rsfc-13-3">false</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-13-4</td>
       <td>There is a dependencies machine-readable file</td>
-      <td><a href="#requirements_specified-https--w3idorg-rsfc-test-rsfc-13-4">false</a></td>
+      <td><a href="#requirements_specified-https--w3idorg-rsfc-test-rsfc-13-4">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-14-1</td>
       <td>Presence of tests in repository</td>
-      <td><a href="#software_has_tests-https--w3idorg-rsfc-test-rsfc-14-1">false</a></td>
+      <td><a href="#software_has_tests-https--w3idorg-rsfc-test-rsfc-14-1">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-14-2</td>
       <td>There are actions to automate tests</td>
-      <td><a href="#repository_workflows-https--w3idorg-rsfc-test-rsfc-14-2">false</a></td>
+      <td><a href="#repository_workflows-https--w3idorg-rsfc-test-rsfc-14-2">true</a></td>
     </tr>
     <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-15-1</td>
@@ -196,10 +196,10 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
       <td>License is SPDX compliant</td>
       <td><a href="#software_has_license-https--w3idorg-rsfc-test-rsfc-15-2">true</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-16-1</td>
       <td>License referenced in metadata files</td>
-      <td><a href="#software_has_license-https--w3idorg-rsfc-test-rsfc-16-1">false</a></td>
+      <td><a href="#software_has_license-https--w3idorg-rsfc-test-rsfc-16-1">true</a></td>
     </tr>
     <tr style="background-color: #f8d7da;">
       <td>https://w3id.org/rsfc/test/RSFC-17-1</td>
@@ -216,10 +216,10 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
       <td>Commits are linked to issues</td>
       <td><a href="#version_control_use-https--w3idorg-rsfc-test-rsfc-17-3">false</a></td>
     </tr>
-    <tr style="background-color: #f8d7da;">
+    <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-18-1</td>
       <td>Repository has citation</td>
-      <td><a href="#software_has_citation-https--w3idorg-rsfc-test-rsfc-18-1">false</a></td>
+      <td><a href="#software_has_citation-https--w3idorg-rsfc-test-rsfc-18-1">true</a></td>
     </tr>
     <tr style="background-color: #d4edda;">
       <td>https://w3id.org/rsfc/test/RSFC-19-1</td>
@@ -230,6 +230,11 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
       <td>https://w3id.org/rsfc/test/RSFC-20-1</td>
       <td>Repository has an issue tracker</td>
       <td><a href="#support_issue_tracking-https--w3idorg-rsfc-test-rsfc-20-1">true</a></td>
+    </tr>
+    <tr style="background-color: #d4edda;">
+      <td>https://w3id.org/rsfc/test/RSFC-21-1</td>
+      <td>Repository has contribution guidelines</td>
+      <td><a href="#has_contribution_guidelines-https--w3idorg-rsfc-test-rsfc-21-1">true</a></td>
     </tr>
   </tbody>
 </table>
@@ -242,10 +247,10 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### Metadata record in Software Heritage or Zenodo
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-08-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for Zenodo and Software Heritage badges in the README file of the repository
-- **Evidence:** Could not find neither a Zenodo DOI identifier or a Software Heritage badge in the repository
-- **Suggestions:** You should archive your software not only in Github/Gitlab. More information at https://everse.software/RSQKit/archiving_software
+- **Evidence:** A Zenodo DOI identifier was found in the repository
+- **Suggestions:** No suggestions
 
 ### descriptive_metadata
 
@@ -253,28 +258,28 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### Version number in metadata
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-03-6
-- **Result:** false
+- **Result:** true
 - **Process:** Checks if a version number for the software is indicated in the CITATION.cff, codemeta.json or package files(i.e. pyproject.toml, pom.xml, etc.)
-- **Evidence:** Could not find a version number for the software in any of the specified files
-- **Suggestions:** You should include the version of your software in its metadata. More information at https://everse.software/RSQKit/software_metadata
+- **Evidence:** Found the software version in one of the specified files
+- **Suggestions:** No suggestions
 
 <a id="descriptive_metadata-https--w3idorg-rsfc-test-rsfc-04-1"></a>
 #### Metadata exists
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-04-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for codemeta, citation and package files in the repository
-- **Evidence:** Could not find any of the following metadata files: cff, package_file
-- **Suggestions:** You should describe your software in metadata files. More information at https://everse.software/RSQKit/software_metadata
+- **Evidence:** Found codemeta, citation and package files in the repository
+- **Suggestions:** No suggestions
 
 <a id="descriptive_metadata-https--w3idorg-rsfc-test-rsfc-04-3"></a>
 #### There are title and description
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-04-3
-- **Result:** false
+- **Result:** true
 - **Process:** Checks if there is a title and a description for the software in the metadata
-- **Evidence:** Could not find a description for the project in the repository
-- **Suggestions:** Remember to add a description to your software's metadata. More information at https://everse.software/RSQKit/software_metadata
+- **Evidence:** Title and description were found in the repository
+- **Suggestions:** No suggestions
 
 <a id="descriptive_metadata-https--w3idorg-rsfc-test-rsfc-04-4"></a>
 #### Software has descriptive metadata
@@ -282,7 +287,7 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-04-4
 - **Result:** false
 - **Process:** Searches for description, programming languages, date of creation and keywords in the repository
-- **Evidence:** Could not find any of the following metadata: description, keywords
+- **Evidence:** Could not find any of the following metadata: keywords
 - **Suggestions:** You should describe your software using metadata. More information at https://everse.software/RSQKit/software_metadata
 
 <a id="descriptive_metadata-https--w3idorg-rsfc-test-rsfc-04-5"></a>
@@ -330,43 +335,57 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 - **Evidence:** All authors defined in the codemeta file have roles assigned
 - **Suggestions:** No suggestions
 
+### has_contribution_guidelines
+
+<a id="has_contribution_guidelines-https--w3idorg-rsfc-test-rsfc-21-1"></a>
+#### Repository has contribution guidelines
+
+- **Test ID:** https://w3id.org/rsfc/test/RSFC-21-1
+- **Result:** true
+- **Process:** Checks if there are contribution guidelines either in the README file or if there is a CONTRIBUTING.md file
+- **Evidence:** Found contribution guidelines at: 
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/CONTRIBUTING.md
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/README.md
+- **Suggestions:** No suggestions
+
 ### has_releases
 
 <a id="has_releases-https--w3idorg-rsfc-test-rsfc-03-1"></a>
 #### Software has releases
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-03-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for release tags in the repository
-- **Evidence:** Could not find any releases in the repository
-- **Suggestions:** You should often launch releases of your software that contain new updates. More information at https://everse.software/RSQKit/releasing_software
+- **Evidence:** These releases were found:
+	- v0.1.0 — FAIR2Adapt General Assembly
+- **Suggestions:** No suggestions
 
 <a id="has_releases-https--w3idorg-rsfc-test-rsfc-03-2"></a>
 #### Releases have an id and version number
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-03-2
-- **Result:** false
+- **Result:** true
 - **Process:** Checks if all of the releases have an identifier and a version
-- **Evidence:** Could not find any releases in the repository
-- **Suggestions:** You should often launch releases of your software that contain new updates. More information at https://everse.software/RSQKit/releasing_software
+- **Evidence:** All of the releases have an id and a version
+- **Suggestions:** No suggestions
 
 <a id="has_releases-https--w3idorg-rsfc-test-rsfc-03-4"></a>
 #### Release identifiers follow the same scheme
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-03-4
-- **Result:** false
+- **Result:** true
 - **Process:** Checks if all of the version identifiers follow the same scheme
-- **Evidence:** Could not find any releases in the repository
-- **Suggestions:** You should often launch releases of your software that contain new updates. More information at https://everse.software/RSQKit/releasing_software
+- **Evidence:** All of the releases URLs follow the same scheme
+- **Suggestions:** No suggestions
 
 <a id="has_releases-https--w3idorg-rsfc-test-rsfc-03-5"></a>
 #### Last release consistency
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-03-5
-- **Result:** error
+- **Result:** false
 - **Process:** Checks if the latest release tag matches the version stated in the package file of the repository
-- **Evidence:** Could not get the necessary information to perform the test, it being releases and/or version in package file
-- **Suggestions:** None
+- **Evidence:** Latest release does not match the latest version stated
+- **Suggestions:** It is good practice to keep consistency between the version of your latest release and the version in your metadata files
 
 ### persistent_and_unique_identifier
 
@@ -374,46 +393,46 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### There is an identifier and resolves
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-01-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for an identifier (i.e. DOI or SWHID) in the README file of the repository
-- **Evidence:** Could not find any identifier in the repository
-- **Suggestions:** You should include a resolvable, unique and persistent identifier in your README file. More information at https://everse.software/RSQKit/software_identifiers
+- **Evidence:** Found the identifier https://doi.org/10.5281/zenodo.20448428 in the README and it resolves
+- **Suggestions:** No suggestions
 
 <a id="persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-01-2"></a>
 #### There is an identifier associated with the software
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-01-2
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for an identifier in the CITATION.cff, codemeta.json and README files
-- **Evidence:** Could not find an identifier in any of the CITATION, codemeta or README files
-- **Suggestions:** Remember that identifiers should be included in other files aside from README like codemeta.json, CITATION.cff. More information at https://everse.software/RSQKit/software_identifiers
+- **Evidence:** An identifier was found but could not find it in the following locations: cff
+- **Suggestions:** No suggestions
 
 <a id="persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-01-3"></a>
 #### Software identifier follows a proper schema
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-01-3
-- **Result:** false
+- **Result:** true
 - **Process:** Checks if the identifiers associated with the software follow any of these schemas: DOI, URN, GITHUB and SWHID
-- **Evidence:** Could not find any identifier in the README file
-- **Suggestions:** You should include a resolvable, unique and persistent identifier in your README file. More information at https://everse.software/RSQKit/software_identifiers
+- **Evidence:** All of the identifiers detected follow a common schema
+- **Suggestions:** No suggestions
 
 <a id="persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-07-1"></a>
 #### There is an identifier in README or CITATION.cff
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-07-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for an identifier in the README or CITATION.cff files of the repository
-- **Evidence:** Could not find an identifier in neither of the README or CITATION files in the repository
-- **Suggestions:** You should include your software's identifier in your README or CITATION.cff files. More information at 
+- **Evidence:** An identifier was found in the README file of the repository
+- **Suggestions:** No suggestions
 
 <a id="persistent_and_unique_identifier-https--w3idorg-rsfc-test-rsfc-07-2"></a>
 #### Software identifier resolves to software
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-07-2
-- **Result:** false
+- **Result:** true
 - **Process:** Checks if the identifier found in the README file or metadata files (i.e. codemeta.json, CITATION.cff) resolves to a page that links back to the software repository
-- **Evidence:** Could not find any identifier in the repository
-- **Suggestions:** You should include a resolvable, unique and persistent identifier in your README file. More information at https://everse.software/RSQKit/software_identifiers
+- **Evidence:** The landing page of the software's identifier links back to the software repository
+- **Suggestions:** No suggestions
 
 ### repository_workflows
 
@@ -421,10 +440,11 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### There are actions to automate tests
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-14-2
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for workflows that contain test or tests in their names
-- **Evidence:** Could not find any workflows or actions that mention test in their names
-- **Suggestions:** You should include github actions that run tests to ensure quality. More information at https://everse.software/RSQKit/task_automation_github_actions
+- **Evidence:** There are workflows or actions that perform automated tests	
+- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/test.yml
+- **Suggestions:** No suggestions
 
 <a id="repository_workflows-https--w3idorg-rsfc-test-rsfc-19-1"></a>
 #### Repository has workflows
@@ -433,11 +453,14 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 - **Result:** true
 - **Process:** Searches for workflows in the repository
 - **Evidence:** Workflows were found in:
-	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/generate-codemeta.yml
-	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/use-rsfc.yml
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/lint.yml
 	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/software-fairification-pipeline.yml
 	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/fairification-pipeline.yml
 	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/fair_assessment.yml
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/use-rsfc.yml
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/test.yml
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/book.yml
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/.github/workflows/generate-codemeta.yml
 - **Suggestions:** No suggestions
 
 ### requirements_specified
@@ -446,10 +469,11 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### Dependencies are declared
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-13-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for dependencies in project configuration files, README and dependencies files such as requirements.txt
-- **Evidence:** Could not find any dependencies indicated in the repository
-- **Suggestions:** You should have your dependencies stated somewhere to enable reproducibility. More information at https://everse.software/RSQKit/reproducible_software_environments
+- **Evidence:** Requirements were found in:
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/pyproject.toml
+- **Suggestions:** No suggestions
 
 <a id="requirements_specified-https--w3idorg-rsfc-test-rsfc-13-3"></a>
 #### Dependencies have version numbers
@@ -457,17 +481,17 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-13-3
 - **Result:** false
 - **Process:** Checks if all of the dependencies stated in the machine-readable file (e.g. requirements.txt, pyproject.toml, etc.) of the repository have a version indicated
-- **Evidence:** Could not find any dependencies indicated in the repository
-- **Suggestions:** You should have your dependencies stated somewhere to enable reproducibility. More information at https://everse.software/RSQKit/reproducible_software_environments
+- **Evidence:** One or more dependencies do not have a version stated
+- **Suggestions:** All of your dependencies should have their versions stated to ensure its reproducibility. More information at https://everse.software/RSQKit/reproducible_software_environments
 
 <a id="requirements_specified-https--w3idorg-rsfc-test-rsfc-13-4"></a>
 #### There is a dependencies machine-readable file
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-13-4
-- **Result:** false
+- **Result:** true
 - **Process:** Checks if dependencies are indicated in a machine-readable file
-- **Evidence:** Could not find any dependencies indicated in the repository
-- **Suggestions:** You should have your dependencies stated somewhere to enable reproducibility. More information at https://everse.software/RSQKit/reproducible_software_environments
+- **Evidence:** There is a machine-readable file for dependencies
+- **Suggestions:** No suggestions
 
 ### software_has_citation
 
@@ -484,10 +508,11 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### Repository has citation
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-18-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for a CITATION.cff file and README file in the repository
-- **Evidence:** Could not find any citation in the repository
-- **Suggestions:** You should include a citation so other people can citate your research software. More information at https://everse.software/RSQKit/citing_software
+- **Evidence:** A citation was found in:
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/CITATION.cff
+- **Suggestions:** No suggestions
 
 ### software_has_documentation
 
@@ -538,6 +563,8 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 - **Process:** Searches for a file named 'LICENSE' or 'LICENSE.md' in the root of the repository.
 - **Evidence:** A license was found in:
 	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/LICENSE
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/pyproject.toml
+	- https://raw.githubusercontent.com/FAIR2Adapt/softwares_RIOMAR/main/README.md
 - **Suggestions:** No suggestions
 
 <a id="software_has_license-https--w3idorg-rsfc-test-rsfc-15-2"></a>
@@ -553,10 +580,10 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### License referenced in metadata files
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-16-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for licensing information in the codemeta, citation and package files if they exist
-- **Evidence:** Could not find any licensing information in the following metadata files: citation, package
-- **Suggestions:** Information about your license should be present in other metadata files like codemeta.json, package files or CITATION. More information on https://everse.software/RSQKit/software_metadata
+- **Evidence:** License information was found in metadata files
+- **Suggestions:** No suggestions
 
 ### software_has_tests
 
@@ -564,10 +591,15 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### Presence of tests in repository
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-14-1
-- **Result:** false
+- **Result:** true
 - **Process:** Searches for files and/or directories that mention test in their names
-- **Evidence:** Could not find any files or directories that mention test
-- **Suggestions:** Your software should include tests to prove its functionability. More information at https://everse.software/RSQKit/testing_software
+- **Evidence:** Files and/or directories that mention test were found at:	
+- .github/workflows/test.yml	
+- tests	
+- tests/__init__.py	
+- tests/test_kerchunk.py	
+- tests/test_masking.py
+- **Suggestions:** No suggestions
 
 ### support_issue_tracking
 
@@ -633,7 +665,7 @@ An automated assessment of the softwares_RIOMAR tool based on the EVERSE softwar
 #### Release versions follow a community established convention
 
 - **Test ID:** https://w3id.org/rsfc/test/RSFC-03-3
-- **Result:** false
+- **Result:** true
 - **Process:** Checks if all of the releases versions follow the SemVer or CalVer versioning standards
-- **Evidence:** Could not find any releases in the repository
-- **Suggestions:** You should often launch releases of your software that contain new updates. More information at https://everse.software/RSQKit/releasing_software
+- **Evidence:** All of the releases follow a versioning standard
+- **Suggestions:** No suggestions
