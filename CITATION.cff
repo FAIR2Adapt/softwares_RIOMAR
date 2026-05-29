@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "softwares_RIOMAR: HEALPix (DGGS) regridding for RiOMar/GAMAR ocean model data"
+type: software
+authors:
+  - given-names: Tina
+    family-names: Odaka
+    affiliation: "Ifremer"
+  - given-names: Esteban
+    family-names: Gonzalez
+    orcid: "https://orcid.org/0000-0003-4112-6825"
+    affiliation: "Universidad Politécnica de Madrid"
+  - given-names: Anne
+    family-names: Fouilloux
+    affiliation: "LifeWatch ERIC"
+  - given-names: Frederic
+    family-names: Paul
+    affiliation: "Ifremer"
+repository-code: "https://github.com/FAIR2Adapt/softwares_RIOMAR"
+url: "https://github.com/FAIR2Adapt/softwares_RIOMAR"
+abstract: >-
+  End-to-end workflow to regrid ocean model data (RiOMar/GAMAR) from
+  curvilinear grids to HEALPix (DGGS) format using xarray, Dask and Kerchunk,
+  running both locally (HTTPS mode) and on HPC infrastructure. Part of the
+  FAIR2Adapt initiative.
+keywords:
+  - HEALPix
+  - DGGS
+  - regridding
+  - ocean-model
+  - xarray
+  - kerchunk
+  - FAIR2Adapt
+license: Apache-2.0
+version: "0.1.0"
+doi: "10.5281/zenodo.20448428"
+date-released: "2026-05-29"
