@@ -27,6 +27,11 @@ ROOT = Path(__file__).resolve().parents[1]
 # https://raw.githubusercontent.com/zarr-conventions/dggs/v1/schema.json
 SCHEMA = json.loads((ROOT / "tests" / "data" / "dggs_v1_schema.json").read_text())
 
+# writing the Zarr v3 format needs zarr-python >= 3 (Python >= 3.11)
+requires_zarr3 = pytest.mark.skipif(
+    int(zarr.__version__.split(".")[0]) < 3, reason="Zarr v3 format needs zarr >= 3"
+)
+
 PARENT_LEVEL = 1
 LEVEL = 3
 NCHILD = 4 ** (LEVEL - PARENT_LEVEL)
@@ -218,7 +223,7 @@ def _group_json(store):
     }
 
 
-@pytest.mark.parametrize("zarr_format", [2, 3])
+@pytest.mark.parametrize("zarr_format", [2, pytest.param(3, marks=requires_zarr3)])
 def test_zarr_round_trip(tmp_path, zarr_format):
     ds = apply_healpix_metadata(_dataset(), level=LEVEL).chunk(
         {"cell_ids": NCHILD, "time_counter": 2}
@@ -263,6 +268,7 @@ def test_write_zarr_chunked_keeps_metadata(tmp_path):
     assert back.attrs["dggs"]["refinement_level"] == LEVEL
 
 
+@requires_zarr3
 def test_xdggs_decodes_output(tmp_path):
     xdggs = pytest.importorskip("xdggs")
     ds = apply_healpix_metadata(_dataset(), level=LEVEL)
@@ -335,6 +341,7 @@ def _run_fix(*args):
     )
 
 
+@requires_zarr3
 def test_fix_existing_store(tmp_path):
     store = tmp_path / "legacy.zarr"
     original = _legacy_store(store)
@@ -386,6 +393,7 @@ def test_fix_existing_store(tmp_path):
         xr.testing.assert_equal(back[name].drop_attrs(), original[name].drop_attrs())
 
 
+@requires_zarr3
 def test_fix_refuses_symlinked_metadata(tmp_path):
     store = tmp_path / "legacy.zarr"
     _legacy_store(store)
@@ -401,6 +409,7 @@ def test_fix_refuses_symlinked_metadata(tmp_path):
     assert elsewhere.read_bytes() == before
 
 
+@requires_zarr3
 def test_fix_detects_inconsistent_levels(tmp_path):
     store = tmp_path / "legacy.zarr"
     _legacy_store(store)
@@ -412,6 +421,7 @@ def test_fix_detects_inconsistent_levels(tmp_path):
     assert "inconsistent refinement levels" in res.stderr
 
 
+@requires_zarr3
 def test_fix_store_with_cell_attrs_only(tmp_path):
     """Stores written before this change: grid attributes on cell_ids only."""
     store = tmp_path / "old.zarr"
