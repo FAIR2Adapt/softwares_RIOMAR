@@ -137,6 +137,42 @@ Singularity container definitions are in `singularity_images/f2a_riomar/`
     -   `level` attribute (e.g. 13)\
     -   WGS84 ellipsoid
 
+### HEALPix grid metadata of the outputs
+
+`healpix_regrid.metadata.apply_healpix_metadata` (called by `to_healpix` and
+the `bin/Create_healpix*.py` scripts) writes the grid description of every
+output:
+
+-   [Zarr DGGS convention v1](https://github.com/zarr-conventions/dggs/blob/v1/README.md):
+    the convention declaration in `zarr_conventions` and the `dggs` group
+    attribute (`name`, `refinement_level`, `indexing_scheme`,
+    `spatial_dimension`, `coordinate`, `compression`, and the WGS84
+    `ellipsoid` with `semi_major_axis` / `inverse_flattening`)
+-   [CF 1.13 `healpix` grid mapping](https://cfconventions.org/cf-conventions/release/v1.13.0/cf-conventions.html#healpix):
+    a scalar `crs` variable (`grid_mapping_name = "healpix"`,
+    `indexing_scheme`, `refinement_level` and the WGS84 ellipsoid), the
+    `standard_name = "healpix_index"` on the cell coordinate, and
+    `grid_mapping = "crs"` on every data variable of the spatial dimension
+-   `healpix_nside` / `healpix_order` on `crs`, with the same values, because
+    the RiOMar dashboard reads them
+
+The older `grid_name` / `level` / `indexing_scheme` / `ellipsoid` attributes
+on `cell_ids` are no longer written: next to the CF `standard_name` they make
+`xdggs.decode` pick its old convention and fail. `xdggs.decode(ds)` (0.7)
+reads the `dggs` attribute instead.
+
+A `Conventions` attribute inherited from the model output (`CF-1.6`) is
+removed and noted in `history`: only the grid metadata is written to follow
+CF 1.13, the rest of the dataset has not been checked against CF 1.13.
+
+To bring an existing Zarr v3 store to the same metadata without touching
+its chunks, run (Python standard library only):
+
+```bash
+python3 bin/fix_healpix_zarr_metadata.py STORE.zarr --backup-dir BACKUP --dry-run
+python3 bin/fix_healpix_zarr_metadata.py STORE.zarr --backup-dir BACKUP
+```
+
 ------------------------------------------------------------------------
 
 ## Troubleshooting

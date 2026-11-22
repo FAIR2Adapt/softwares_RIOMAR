@@ -14,6 +14,8 @@ import psutil
 import xarray as xr
 from dask.distributed import Client, LocalCluster
 
+from healpix_regrid.metadata import apply_healpix_metadata
+
 
 def run():
     """Run the full pipeline.
@@ -341,14 +343,9 @@ def run():
         ds_hp = xr.Dataset(out_vars).assign_coords(cell_ids=("cell_ids", cell_ids))
 
         # Re-attach cell_ids metadata
-        ds_hp["cell_ids"].attrs.update(
-            {
-                "grid_name": "healpix",
-                "level": int(child_level),
-                "indexing_scheme": "nested",
-                "ellipsoid": "WGS84",
-            }
-        )
+        # HEALPix grid metadata (Zarr DGGS convention v1 + CF 1.13 healpix
+        # grid mapping), shared with healpix_regrid.to_healpix
+        ds_hp = apply_healpix_metadata(ds_hp, level=child_level, cell_coord="cell_ids")
 
         # Align to target ids and chunk for writing
         ds_aligned = ds_hp.reindex(cell_ids=target_ids, fill_value=np.nan).chunk(
