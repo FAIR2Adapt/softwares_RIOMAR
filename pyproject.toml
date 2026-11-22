@@ -24,7 +24,7 @@ dependencies = [
 
 [project.optional-dependencies]
 kerchunk = ["kerchunk", "fsspec", "virtualizarr"]
-test = ["pytest"]
+test = ["pytest", "jsonschema"]
 lint = ["pre-commit", "ruff"]
 
 [tool.pytest.ini_options]

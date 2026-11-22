@@ -13,6 +13,8 @@ import xarray as xr
 import zarr
 from dask.distributed import Client, LocalCluster
 
+from healpix_regrid.metadata import apply_healpix_metadata
+
 time_chunk_size = 24  # 1 day as a chunk
 # time_chunk_size = 1  # 1 day as a chunk
 
@@ -269,14 +271,9 @@ def to_healpix(ds_in):
 
     # Re-attach coordinate + its metadata
     ds_hp = ds_hp.assign_coords(cell_ids=("cell_ids", cell_ids))
-    ds_hp["cell_ids"].attrs.update(
-        {
-            "grid_name": "healpix",
-            "level": 13,
-            "indexing_scheme": "nested",
-            "ellipsoid": "WGS84",
-        }
-    )
+    # HEALPix grid metadata (Zarr DGGS convention v1 + CF 1.13 healpix
+    # grid mapping), shared with healpix_regrid.to_healpix
+    ds_hp = apply_healpix_metadata(ds_hp, level=child_level, cell_coord="cell_ids")
 
     # compute the child id from the final interest region
     aligned_child_ids = np.unique(

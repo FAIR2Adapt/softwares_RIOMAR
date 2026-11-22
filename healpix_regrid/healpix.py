@@ -4,6 +4,8 @@ import healpix_geo
 import numpy as np
 import xarray as xr
 
+from healpix_regrid.metadata import apply_healpix_metadata
+
 
 def to_healpix(
     ds_in: xr.Dataset,
@@ -45,7 +47,10 @@ def to_healpix(
     -------
     xr.Dataset
         HEALPix-indexed dataset aligned to the ROI cell IDs, chunked and
-        ready for Zarr output.
+        ready for Zarr output.  The grid is described by the Zarr DGGS
+        convention v1 (``dggs`` group attribute) and the CF 1.13 ``healpix``
+        grid mapping (``crs`` variable, ``healpix_index`` cell coordinate),
+        see :func:`healpix_regrid.metadata.apply_healpix_metadata`.
     """
     from healpix_resample import BilinearResampler
 
@@ -80,14 +85,9 @@ def to_healpix(
     )
 
     ds_hp = ds_hp.assign_coords(cell_ids=("cell_ids", cell_ids))
-    ds_hp["cell_ids"].attrs.update(
-        {
-            "grid_name": "healpix",
-            "level": int(child_level),
-            "indexing_scheme": "nested",
-            "ellipsoid": "WGS84",
-        }
-    )
+    # HEALPix grid metadata: Zarr DGGS convention v1 + CF 1.13 healpix grid
+    # mapping (see healpix_regrid.metadata)
+    ds_hp = apply_healpix_metadata(ds_hp, level=child_level, cell_coord="cell_ids")
 
     # Align to the target ROI cell IDs
     aligned_child_ids = np.unique(
